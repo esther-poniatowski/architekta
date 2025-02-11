@@ -2,9 +2,13 @@ debugpy
 esbonio
 miniconda
 mypy
+numpydoc
 pylance
 pylint
 pylintrc
+pyright
 pytest
+pyyaml
 rcfile
 rstcheck
+sphinxcontrib
