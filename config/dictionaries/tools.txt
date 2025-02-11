@@ -1,0 +1,10 @@
+debugpy
+esbonio
+miniconda
+mypy
+pylance
+pylint
+pylintrc
+pytest
+rcfile
+rstcheck
