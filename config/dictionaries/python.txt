@@ -1,2 +1,4 @@
 docstrings
+isinstance
+issubset
 pycache
