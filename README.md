@@ -1,49 +1,45 @@
 # Architekta
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![License:MIT](https://img.shields.io/badge/License-GNU-yellow.svg)](https://opensource.org/licenses/GNU)
+[![Platform](https://img.shields.io/badge/platform-linux%20|%20windows%20|%20macos-lightgrey)]()
+[![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
+[![GitHub last commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
 
-Architekta is a unified Python project manager focused on enforcing and automating the recommended
-practices for robustness and reproducibility. It guides the entire project lifecycle through setup,
-development, versioning, and distribution, integrating multiple development tools into a cohesive
-workflow.
+Architekta is a project management utility that automates the entire lifecycle of a Python project,
+from initial setup to deployment. It provides a single interface and standardized structure to control
+development tasks and configurations across multiple tools.
 
 ## Motivation
 
-Managing a Python project throughout its life cycle involves a complex sequence of tasks, fragmented
-across multiple tools and configurations.
+Managing a Python project throughout its life cycle, from initial setup to deployment, involves a
+sequence of tasks (e.g. dependency management, testing, linting, documentation, packaging).
 
-While existing solutions address individual aspects (see [ALTERNATIVES.md](docs/ALTERNATIVES.md) for
-comparisons), no tool unifies the entire workflow into a single, Python-centric framework.
+These tasks often require diverse of tools and configurations, leading to overwhelming workflows
+and patchwork project structures. While existing solutions address isolated aspects of project
+management (see [ALTERNATIVES.md](docs/ALTERNATIVES.md)), no tool unifies the entire workflow into a
+single, Python-centric framework.
 
-Architekta provides a comprehensive project management system that:
+Architekta consolidates these operations into a comprehensive project management system.
 
-- Automates recommended practices across the project lifecycle.
-- Enforces a consistent structure and toolchain setup.
-- Reduces friction by integrating multiple tools into a single interface.
+Key features include:
 
-With Architekta, developers can focus on implementing their project's logic, rather than on
-configuring tooling.
-
-Key advantages of Architekta include:
-
-- Integration: Unifies project setup, development, and distribution in a structured framework.
-- Automation: Eliminates repetitive setup tasks and minimizes the need to learn multiple independent
-  tools.
-- Robustness: Integrates multiple tools to enforce recommended practices for reproducibility,
-  code quality, testing, documentation, etc.
-- Standardization: Promotes uniform practices across projects, facilitating collaboration and
+- Control: High-level interface to manage an entire project lifecycle (setup, development,
+  deployment, distribution).
+- Integration: Seamless orchestration of multiple tools (environment management, testing, linting,
+  documentation, packaging).
+- Automation: Predefined tasks and setups to reduce manual intervention.
+- Robustness: Promotion of recommended practices for reproducibility, extensibility, code quality,
+  testing, documentation.
+- Standardization: Consistent workflows and configuration structure to facilitate collaboration and
   onboarding.
-- Efficiency: Automates project management through a single interface and predefined setups,
-  reducing repetitive manual tasks and eliminating the need to master multiple tools.
-- Customization: Offers flexible configurations to adapt to project-specific requirements.
-- Maintainability: Centralized configuration management simplifies project updates and extensions.
-
+- Customization: Flexible configurations and plugin support to adapt to specific project needs.
+- Maintainability: Central configuration to simplify future updates or extensions.
 
 ## Features
 
 - **Project Structure**
-  - Centralize project metadata, dependencies and tool configurations in a declarative format (`arkt.conf`).
+  - Centralize project metadata, dependencies and tool configurations in a declarative format
+    (`arkt.conf`).
   - Create standardized directories structures: `src/`, `tests/`, `docs/`, `config/`, `scripts/`.
   - Generate essential files: `README.md`, `LICENSE`.
 
@@ -65,7 +61,7 @@ Key advantages of Architekta include:
   Provides default configuration templates for:
   - Type checking with Mypy
   - Linting with Pylint
-  - Formatting with Black and Isort
+  - Formatting with Black
 
 - **Testing**
   - Provide a default configuration template for Pytest (`conftest.py`).
@@ -76,7 +72,7 @@ Key advantages of Architekta include:
   - Templates for Architecture Decision Records (ADR).
   - Assistance in changelog generation.
 
-- **Versionning**
+- **Versioning**
   - Automate versioning numbering and tagging following the semantic versioning scheme.
   - Assist in release notes and changelog aggregation.
   - Synchronize with GitHub releases.
@@ -91,37 +87,47 @@ Key advantages of Architekta include:
 
 ## Installation
 
+Architekta is currently available for installation directly from its GitHub repository.
+
+To install the package and its dependencies in an activated virtual environment:
+
 ```sh
-pip install architekta
+pip install git+https://github.com/esther-poniatowski/architekta.git
+```
+
+To install a specific version, specify the version tag in the URL:
+
+```sh
+pip install git+https://github.com/esther-poniatowski/architekta.git@v0.1.0
 ```
 
 ## Quick Start
 
 1. Initialize new project (`project-name`):
 
-```sh
-architekta init <project-name>
-```
+    ```sh
+    architekta init <project-name>
+    ```
 
 2. Edit `config/architekta_config.ini`:
 
-```ini
-[project]
-name = my_project
-python_version = 3.10
+    ```ini
+    [project]
+    name = my_project
+    python_version = 3.10
 
-[tools]
-enable_linting = true
-enable_testing = true
-```
+    [tools]
+    enable_linting = true
+    enable_testing = true
+    ```
 
 3. Configure components:
 
-```sh
-architekta setup git
-architekta tool black
-architekta env create
-```
+    ```sh
+    architekta setup git
+    architekta tool black
+    architekta env create
+    ```
 
 ## Command Reference
 
