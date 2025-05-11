@@ -4,7 +4,14 @@
 test_architekta.test_cli
 ========================
 
-Tests for the CLI.
+Tests for the foundations of the CLI.
+
+This test suite ensures that the CLI:
+
+- Defines the main CLI entry point (architekta).
+- Supports basic execution (architekta --help).
+- Contains high-level command groups (although they might be empty).
+- Handles unknown commands gracefully.
 
 See Also
 --------
