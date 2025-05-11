@@ -5,8 +5,8 @@
 [![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
 [![GitHub last commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
 
-Architekta is a project management utility that automates the entire lifecycle of a Python project,
-from initial setup to deployment. It provides a single interface and standardized structure to control
+Architekta is a project manager that automates the entire lifecycle of Python projects,
+from initial setup to deployment. It provides a standardized interface and project structure to control
 development tasks and configurations across multiple tools.
 
 ## Motivation
