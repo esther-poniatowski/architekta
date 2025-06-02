@@ -1,5 +1,59 @@
+// =================================================================================================
+// VS Code Extension Recommendations for Architekta
+//
+// Suggested extensions for consistent functionality and tooling across environments.
+//
+// Categories
+// -----------
+// - Spell Checking
+// - Core Language Support
+// - Debugging
+// - Testing
+// - Formatting
+// - Linting
+// - Static Type Checking
+// - Documentation
+// - Miscellaneous Utilities
+// =================================================================================================
 {
-    "recommendations": [
-        "github.vscode-github-actions"
-    ]
+  "recommendations": [
+    // --- Spell Checking --------------------------------------------------------------------------
+    "streetsidesoftware.code-spell-checker",
+
+    // --- Core Language Support -------------------------------------------------------------------
+    "ms-python.vscode-pylance",
+
+    // --- Debugging -------------------------------------------------------------------------------
+    "ms-python.debugpy",
+
+    // --- Testing ---------------------------------------------------------------------------------
+    "ms-vscode.test-adapter-converter",
+    "hbenl.vscode-test-explorer",
+    "ms-python.python-test-adapter",
+    "littlefoxteam.vscode-python-test-adapter",
+
+    // --- Formatting ------------------------------------------------------------------------------
+    "ms-python.black-formatter",
+    "stkb.rewrap",
+
+    // --- Linting ---------------------------------------------------------------------------------
+    "ms-python.pylint",
+
+    // --- Static Type Checking --------------------------------------------------------------------
+    "ms-python.mypy-type-checker",
+
+    // --- Documentation ---------------------------------------------------------------------------
+    "lextudio.restructuredtext-pack",
+    "lextudio.restructuredtext",
+    "trond-snekvik.simple-rst",
+    "leonhard-s.python-sphinx-highlighting",
+    "leonhard-s.python-sphinx-highlight",
+    "swyddfa.esbonio",
+    "njpwerner.autodocstring",
+    "noahsyn10.pydoctestbtn",
+
+    // --- Miscellaneous Utilities -----------------------------------------------------------------
+    "github.copilot",
+    "wayou.vscode-todo-highlight"
+  ]
 }
