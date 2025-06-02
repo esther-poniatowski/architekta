@@ -1,0 +1,62 @@
+# ==================================================================================================
+# Pyproject Configuration for Architekta Package
+# ==================================================================================================
+
+# --- Build System Requirements --------------------------------------------------------------------
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+# --- Package Metadata -----------------------------------------------------------------------------
+
+[project]
+name = "architekta"
+version = "0.1.0"
+authors = [{name = "Esther Poniatowski", email = "esther.poniatowski@ens.psl.eu"}]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+readme = {file = "README.md", content-type = "text/markdown"}
+description = "Project manager for standardizing and automating Python development workflows"
+keywords = ["best-practices", "configuration", "versioning", "project-management",
+            "repository-management", "development-toolbox", "virtual-environment",
+            "automated-workflow"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha"
+]
+urls = {homepage = "https://github.com/esther-poniatowski/architekta"}
+
+
+# --- Dependencies ---------------------------------------------------------------------------------
+
+requires-python = ">=3.12"
+
+dependencies = [
+    "grayskull",         # Recipe generation from PyPI to Conda
+    "requests",          # HTTP requests for API interactions
+    "packaging",         # Version parsing, comparison, normalization
+    "pyyaml",            # YAML configuration parsing
+    "typer",             # CLI interface
+    "rich",              # Improved CLI output formatting
+]
+# Note: "tomli" for TOML parsing is included standard library (Python 3.11+)
+
+[project.optional-dependencies]
+mamba = []               # Mamba support (e.g. "libmambapy", not available on PyPI)
+
+# --- Package Source Code --------------------------------------------------------------------------
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- CLI Entry Points -----------------------------------------------------------------------------
+
+[project.scripts]
+architekta = "architekta.cli:app"
+arkt = "architekta.cli:app"
