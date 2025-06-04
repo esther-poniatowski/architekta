@@ -1,144 +1,157 @@
 # Architekta
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/platform-linux%20|%20windows%20|%20macos-lightgrey)]()
+![Maintenance](https://img.shields.io/maintenance/yes/2025)
+[![Last Commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
+[![Python](https://img.shields.io/badge/python-supported-blue)](https://www.python.org/)
 [![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
-[![GitHub last commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
 
-Project manager for automating the entire lifecycle of Python projects, from initial setup to
-deployment. It provides a standardized interface and project structure to control development tasks
-and configurations across multiple tools.
+---
 
-## Motivation
+## Table of Contents
 
-Managing a Python project throughout its life cycle, from initial setup to deployment, involves a
-sequence of tasks (e.g. dependency management, testing, linting, documentation, packaging).
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [Support](#support)
+- [Contributing](#contributing)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
 
-These tasks often require diverse of tools and configurations, leading to overwhelming workflows
-and patchwork project structures. While existing solutions address isolated aspects of project
-management (see [ALTERNATIVES.md](docs/ALTERNATIVES.md)), no tool unifies the entire workflow into a
-single, Python-centric framework.
+## Overview
 
-Architekta consolidates these operations into a comprehensive project management system.
-
-General features include:
-
-- Control: High-level interface to manage an entire project lifecycle (setup, development,
-  deployment, distribution).
-- Integration: Seamless orchestration of multiple tools (environment management, testing, linting,
-  documentation, packaging).
-- Automation: Predefined tasks and setups to reduce manual intervention.
-- Robustness: Promotion of recommended practices for reproducibility, extensibility, code quality,
-  testing, documentation.
-- Standardization: Consistent workflows and configuration structure to facilitate collaboration and
-  onboarding.
-- Customization: Flexible configurations and plugin support to adapt to specific project needs.
-- Maintainability: Central configuration to simplify future updates or extensions.
+---
 
 ## Features
 
-- **Project Structure**
-  - Centralize project metadata, dependencies and tool configurations in a declarative format
-    (`arkt.conf`).
-  - Create standardized directories structures: `src/`, `tests/`, `docs/`, `config/`, `scripts/`.
-  - Generate essential files: `README.md`, `LICENSE`.
+- [X] **Feature 1:** Description.
+- [ ] **Feature 2:** Description.
 
-- **Version Control**
-  - Configure Git repository: `.gitignore`, commit message template.
-  - Configure Github repository: issue templates, GitHub actions.
-
-- **Virtual Environment and Dependency Management**
-  - Ensure dependency isolation and resolution with Conda.
-  - Create and update the Conda environment from a `environment.yml` file, automatically generated
-    to integrates essential development tools (aligned with recommended practices) and project's
-    specific dependencies (user-defined).
-  - Register in "editable" mode the project packages (in the Python search path or the conda
-    environment, via a `.pth` file in `site-package`), and executable scripts (in the conda
-    environment `bin`, via a symlink).
-  - Inspect the Conda environment.
-
-- **Code Quality**
-  Provides default configuration templates for:
-  - Type checking with Mypy
-  - Linting with Pylint
-  - Formatting with Black
-
-- **Testing**
-  - Provide a default configuration template for Pytest (`conftest.py`).
-  - Generate reports for test results and coverage, to be integrated with Sphinx documentation.
-
-- **Documentation**
-  - Automated documentation generation with Sphinx, API documentation with autodoc.
-  - Templates for Architecture Decision Records (ADR).
-  - Assistance in changelog generation.
-
-- **Versioning**
-  - Automate versioning numbering and tagging following the semantic versioning scheme.
-  - Assist in release notes and changelog aggregation.
-  - Synchronize with GitHub releases.
-
-- **Distribution**
-  - Build and package the project for distribution via both PyPI and Conda (generate
-    `pyproject.toml` and `meta.yaml` files).
-  - Define GitHub workflows for CI/CD, automating test, build, and deploy steps.
-
-- **IDE Integration**
-  - Generate a VSCode workspace to integrate all the tools and configurations.
+---
 
 ## Installation
 
-Architekta is currently available for installation directly from its GitHub repository.
+To install the package and its dependencies, use one of the following methods:
 
-To install the package and its dependencies in an activated virtual environment:
+### Using Pip Installs Packages
 
-```sh
+Install the package from the GitHub repository URL via `pip`:
+
+```bash
 pip install git+https://github.com/esther-poniatowski/architekta.git
 ```
 
-To install a specific version, specify the version tag in the URL:
+### Using Conda
 
-```sh
-pip install git+https://github.com/esther-poniatowski/architekta.git@v0.1.0
+Install the package from the private channel eresthanaconda:
+
+```bash
+conda install architekta -c eresthanaconda
 ```
 
-## Quick Start
+### From Source
 
-1. Initialize new project (`project-name`):
+1. Clone the repository:
 
-    ```sh
-    architekta init <project-name>
-    ```
+      ```bash
+      git clone https://github.com/esther-poniatowski/architekta.git
+      ```
 
-2. Edit `config/architekta_config.ini`:
+2. Create a dedicated virtual environment:
 
-    ```ini
-    [project]
-    name = my_project
-    python_version = 3.10
+      ```bash
+      cd architekta
+      conda env create -f environment.yml
+      ```
 
-    [tools]
-    enable_linting = true
-    enable_testing = true
-    ```
+---
 
-3. Configure components:
+## Usage
 
-    ```sh
-    architekta setup git
-    architekta tool black
-    architekta env create
-    ```
+### Command Line Interface (CLI)
 
-## Command Reference
+To display the list of available commands and options:
 
-| Command | Description |
-|---------|-------------|
-| `init [name]` | Initialize new project structure |
-| `setup [component]` | Configure project components (git/conda/docs) |
-| `tool [name]` | Add tool configuration (mypy/pylint/black) |
-| `env [action]` | Manage Conda environments (create/update/export) |
-| `generate docs` | Build project documentation |
+```sh
+architekta --help
+```
+
+### Programmatic Usage
+
+To use the package programmatically in Python:
+
+```python
+import architekta
+```
+
+---
+
+## Configuration
+
+### Environment Variables
+
+|Variable|Description|Default|Required|
+|---|---|---|---|
+|`VAR_1`|Description 1|None|Yes|
+|`VAR_2`|Description 2|`false`|No|
+
+### Configuration File
+
+Configuration options are specified in YAML files located in the `config/` directory.
+
+The canonical configuration schema is provided in [`config/default.yaml`](config/default.yaml).
+
+```yaml
+var_1: value1
+var_2: value2
+```
+
+---
+
+## Documentation
+
+- [User Guide](https://esther-poniatowski.github.io/architekta/guide/)
+- [API Documentation](https://esther-poniatowski.github.io/architekta/api/)
+
+> [!NOTE]
+> Documentation can also be browsed locally from the [`docs/`](docs/) directory.
+
+## Support
+
+**Issues**: [GitHub Issues](https://github.com/esther-poniatowski/architekta/issues)
+
+**Email**: `{{ contact@example.com }}`
+
+---
+
+## Contributing
+
+Please refer to the [contribution guidelines](CONTRIBUTING.md).
+
+---
+
+## Acknowledgments
+
+### Authors & Contributors
+
+**Author**: @esther-poniatowski
+
+**Contact**: `{{ contact@example.com }}`
+
+For academic use, please cite using the GitHub "Cite this repository" feature to
+generate a citation in various formats.
+
+Alternatively, refer to the [citation metadata](CITATION.cff).
+
+### Third-Party Dependencies
+
+- **[Library A](link)** - Purpose
+- **[Library B](link)** - Purpose
+
+---
 
 ## License
 
-This project is licensed under the [GNU LICENSE](LICENSE).
+This project is licensed under the terms of the [GNU General Public License v3.0](LICENSE).
