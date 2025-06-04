@@ -28,7 +28,7 @@ structured as follows:
 
 ```yaml
 - name: repo_name_1
-    user: user_name
+    user: github_user
     branch: main
     pyproject_path: pyproject.toml
     envs:
@@ -162,7 +162,7 @@ def load_env_spec(spec_path: Path,
 
     ```yaml
     - name: repo_name_1
-      user: user_name
+      user: github_user
       branch: main
       pyproject_path: pyproject.toml
       envs:
