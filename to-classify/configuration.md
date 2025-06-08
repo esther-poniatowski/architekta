@@ -62,7 +62,7 @@ Examples:
 
 ```json
 {
-    "black-formatter.args": ["--config", "./config/tools/black.toml"],
-    "mypy-type-checker.args": ["--config-file=./config/tools/mypy.ini"],
+    "black-formatter.args": ["--config", "${workspaceFolder}/config/tools/black.toml"],
+    "mypy-type-checker.args": ["--config-file=${workspaceFolder}/config/tools/mypy.ini"],
 }
 ```
