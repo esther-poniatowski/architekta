@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Generates `environment.yml` files for different environments, merging the `pyproject.toml` files of
 GitHub repositories.
