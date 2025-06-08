@@ -1,5 +1,5 @@
 # ==================================================================================================
-# Python Semantic Release Configurations for {{ package_name }} Package
+# Python Semantic Release Configurations for the `architekta` Package
 #
 # File: `config/tools/releaserc.toml`
 #
