@@ -15,8 +15,15 @@ typer.Typer
 
 import typer
 from . import info, __version__
+from .env.commands import app as env_app
+
+
+# --- Main application instance --------------------------------------------------------------------
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
+
+
+# --- Global Commands ------------------------------------------------------------------------------
 
 
 @app.command("info")
@@ -35,3 +42,8 @@ def main_callback(
     if version:
         typer.echo(__version__)
         raise typer.Exit()
+
+
+# --- Commands for Environment Management ----------------------------------------------------------
+
+app.add_typer(env_app, name="env")

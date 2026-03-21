@@ -11,4 +11,6 @@ New minimal version.
 
 ## Contents
 
-- `src/architekta/cli.py`
+- `src/architekta/cli.py`: Main CLI entry point for Architekta.
+
+- `src/architekta/commands/env.py`: Commands related to environment management.
