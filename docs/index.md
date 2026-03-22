@@ -22,8 +22,7 @@ adr/adr-template
 
 ```{toctree}
 :maxdepth: 2
-:caption: Reference
+:caption: API Reference
 
-ALTERNATIVES
 api/index
 ```

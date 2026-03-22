@@ -1,7 +1,7 @@
 # Architekta
 
 [![Conda](https://img.shields.io/badge/conda-eresthanaconda--channel-blue)](#installation)
-[![Maintenance](https://img.shields.io/maintenance/yes/2025)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2026)]()
 [![Last Commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
 [![Python](https://img.shields.io/badge/python-supported-blue)](https://www.python.org/)
 [![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
@@ -122,18 +122,40 @@ conda install architekta -c eresthanaconda
 
 ### Command Line Interface (CLI)
 
-To display the list of available commands and options:
+Install all packages under `src/` in editable mode into the current conda environment:
 
 ```sh
-architekta --help
+architekta env install-editable --all
+```
+
+Install a single package with a dry-run preview:
+
+```sh
+architekta env install-editable --path ./src/my_package --dry-run
+```
+
+Target a specific conda environment:
+
+```sh
+architekta env install-editable --all --env myenv
+```
+
+Display version and platform diagnostics:
+
+```sh
+architekta info
 ```
 
 ### Programmatic Usage
 
-To use the package programmatically in Python:
-
 ```python
-import architekta
+from architekta.env.utils import get_site_packages, resolve_package_paths
+
+# Find the site-packages directory for a conda environment
+site_dir = get_site_packages("myenv")
+
+# Resolve package paths from the src/ directory
+paths = resolve_package_paths(packages=["pkg_a", "pkg_b"])
 ```
 
 ---
