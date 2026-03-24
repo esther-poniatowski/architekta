@@ -1,10 +1,12 @@
 """Utility functions for GitHub repository metadata operations."""
 
 import re
-import subprocess
 from pathlib import Path
 
+import tomlkit
+
 from architekta.github.exceptions import RemoteNotFound, DescriptionNotFound, GhCliError
+from architekta.infrastructure import run_command
 
 
 def extract_readme_description(project_dir: Path) -> str:
@@ -39,41 +41,33 @@ def extract_readme_description(project_dir: Path) -> str:
 
 def get_github_remote(project_dir: Path) -> tuple[str, str]:
     """Parse the origin remote URL to extract the GitHub owner and repo name."""
-    result = subprocess.run(
+    stdout = run_command(
         ["git", "-C", str(project_dir), "remote", "get-url", "origin"],
-        capture_output=True,
-        text=True,
+        error_cls=RemoteNotFound,
+        context=f"No git remote 'origin' in {project_dir}",
     )
-    if result.returncode != 0:
-        raise RemoteNotFound(f"No git remote 'origin' in {project_dir}")
-    url = result.stdout.strip()
-    match = re.search(r"github\.com[:/](.+?)/(.+?)(?:\.git)?$", url)
+    match = re.search(r"github\.com[:/](.+?)/(.+?)(?:\.git)?$", stdout)
     if not match:
-        raise RemoteNotFound(f"Cannot parse GitHub owner/repo from remote URL: {url}")
+        raise RemoteNotFound(f"Cannot parse GitHub owner/repo from remote URL: {stdout}")
     return match.group(1), match.group(2)
 
 
 def get_current_description(owner: str, repo: str) -> str:
     """Fetch the current GitHub repository description via the gh CLI."""
-    result = subprocess.run(
+    return run_command(
         ["gh", "repo", "view", f"{owner}/{repo}", "--json", "description", "-q", ".description"],
-        capture_output=True,
-        text=True,
+        error_cls=GhCliError,
+        context=f"Failed to query {owner}/{repo}",
     )
-    if result.returncode != 0:
-        raise GhCliError(f"Failed to query {owner}/{repo}: {result.stderr.strip()}")
-    return result.stdout.strip()
 
 
 def set_description(owner: str, repo: str, description: str) -> None:
     """Update the GitHub repository description via the gh CLI."""
-    result = subprocess.run(
+    run_command(
         ["gh", "repo", "edit", f"{owner}/{repo}", "--description", description],
-        capture_output=True,
-        text=True,
+        error_cls=GhCliError,
+        context=f"Failed to update {owner}/{repo}",
     )
-    if result.returncode != 0:
-        raise GhCliError(f"Failed to update {owner}/{repo}: {result.stderr.strip()}")
 
 
 def get_pyproject_description(project_dir: Path) -> str | None:
@@ -81,24 +75,20 @@ def get_pyproject_description(project_dir: Path) -> str | None:
     pyproject = project_dir / "pyproject.toml"
     if not pyproject.exists():
         return None
-    text = pyproject.read_text()
-    match = re.search(r'^description\s*=\s*"([^"]*)"', text, re.MULTILINE)
-    if not match:
+    doc = tomlkit.parse(pyproject.read_text())
+    project_table = doc.get("project")
+    if not project_table or "description" not in project_table:
         return None
-    return match.group(1).strip()
+    return str(project_table["description"]).strip()
 
 
 def set_pyproject_description(project_dir: Path, description: str) -> None:
     """Update the description field in pyproject.toml in place."""
     pyproject = project_dir / "pyproject.toml"
     text = pyproject.read_text()
-    new_text, count = re.subn(
-        r'^(description\s*=\s*)"[^"]*"',
-        rf'\1"{description}"',
-        text,
-        count=1,
-        flags=re.MULTILINE,
-    )
-    if count == 0:
+    doc = tomlkit.parse(text)
+    project_table = doc.get("project")
+    if not project_table or "description" not in project_table:
         raise DescriptionNotFound(f"No description field in {pyproject}")
-    pyproject.write_text(new_text)
+    project_table["description"] = description
+    pyproject.write_text(tomlkit.dumps(doc))

@@ -38,7 +38,7 @@ def cli_groups():
     set
        Names of the high-level command groups.
     """
-    return {"setup", "update", "inspect", "run", "version", "dist"}
+    return {"env", "github"}
 
 # --- Tests ----------------------------------------------------------------------------------------
 

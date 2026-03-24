@@ -39,10 +39,10 @@ dependencies = [
     "requests",          # HTTP requests for API interactions
     "packaging",         # Version parsing, comparison, normalization
     "pyyaml",            # YAML configuration parsing
+    "tomlkit",           # Round-trip TOML parsing and writing
     "typer",             # CLI interface
     "rich",              # Improved CLI output formatting
 ]
-# Note: "tomli" for TOML parsing is included standard library (Python 3.11+)
 
 [project.optional-dependencies]
 mamba = []               # Mamba support (e.g. "libmambapy", not available on PyPI)
