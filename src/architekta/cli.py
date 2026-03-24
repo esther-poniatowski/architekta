@@ -16,6 +16,7 @@ typer.Typer
 import typer
 from . import info, __version__
 from .env.commands import app as env_app
+from .github.commands import app as github_app
 
 
 # --- Main application instance --------------------------------------------------------------------
@@ -47,3 +48,7 @@ def main_callback(
 # --- Commands for Environment Management ----------------------------------------------------------
 
 app.add_typer(env_app, name="env")
+
+# --- Commands for GitHub Repository Management -------------------------------------------------------
+
+app.add_typer(github_app, name="github")

@@ -2,9 +2,9 @@
 
 ## Command: `env install-editable`
 
-**Description**: Install package(s) in "editable mode" in the active conda environment. This
-operation allows the package to be imported directly from its source directory, enabling immediate
-reflection of source code modifications without requiring reinstallation.
+**Description**: Install package(s) in "editable mode" in the active conda environment. The
+installed package can be imported directly from its source directory, so that changes to the source
+code take effect immediately without reinstalling.
 
 Technically, the command creates a `.pth` file in the `site-packages` directory of the active conda
 environment, containing the path to the package directory. The `.pth` file is named `<package>.pth`
@@ -12,8 +12,8 @@ and will be overwritten if it exists, ensuring unique package names and avoiding
 other packages. If the `--include-tests` option is specified (see below), the `.pth` file will also
 include the path to the test directory.
 
-This is an alternative to using `pip install -e .` for editable installations in conda environments,
-thereby avoiding the need to build the package as a wheel or source distribution.
+Unlike `pip install -e .`, the `.pth` approach does not require building the package as a wheel or
+source distribution.
 
 **Inputs**:
 
@@ -69,3 +69,57 @@ the `.pth` file is removed.
 - Initial development of a package, allowing updates without reinstalling.
 - Maintaining inter-package dependencies in monorepo structures during development.
 - Testing or documentation environments where source availability is required without packaging.
+
+## Command: `github sync-descriptions`
+
+**Description**: Synchronize each project's first descriptive sentence from `README.md` into two
+targets: the GitHub repository description ("About" field) and the `description` field in
+`pyproject.toml`. Iterates over sibling project directories, extracts the first line of prose from
+each README, and updates both targets when they differ.
+
+The extraction skips title headings, badge lines (`[![`), horizontal rules (`---`), HTML comments,
+and blank lines, returning the first line of plain prose.
+
+Each target is synchronized independently. A missing `pyproject.toml` or absent `description` field
+causes the pyproject target to be skipped for that project without affecting the GitHub target.
+
+**Inputs**:
+
+- Positional argument(s) (optional): Path(s) to project directories to synchronize. If omitted, the
+  command discovers all sibling directories of the current working directory that contain both a
+  `README.md` and a `.git` directory.
+
+- `--dry-run` (optional, default=False): Preview the changes that would be made without updating any
+  GitHub repository descriptions.
+
+**Outputs**:
+
+- Exit codes:
+
+| Code | Condition                                        |
+| ---- | ------------------------------------------------ |
+| 0    | All descriptions synchronized successfully       |
+| 1    | One or more projects failed (skipped or errored) |
+
+- Diagnostic messages for each project and target, written to stderr. Each line includes the
+  project name and the target (`[github]` or `[pyproject]`):
+
+| Prefix  | Meaning                                                  |
+| ------- | -------------------------------------------------------- |
+| `[OK]`  | Target description already matches the README            |
+| `[SET]` | Target description updated to match the README           |
+| `[DRY]` | Dry-run preview of the change                            |
+| `[SKIP]`| Target skipped (no remote, no pyproject.toml, or error)  |
+| `[ERR]` | Update failed (GitHub API error or file write error)     |
+
+**Side Effects**:
+
+- Updates the "description" field of the GitHub repository via `gh repo edit`. The change is
+  immediately visible on the repository's GitHub page.
+- Rewrites the `description = "..."` line in `pyproject.toml` in place, preserving all other
+  file content.
+
+**Dependencies**:
+
+- Requires the GitHub CLI (`gh`) to be installed and authenticated (`gh auth login`).
+- Each project directory must have a git remote named `origin` pointing to a GitHub repository.
