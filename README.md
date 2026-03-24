@@ -8,7 +8,7 @@
 
 ---
 
-Project manager for standardizing and automating Python development workflows via centralized configuration, predefined task orchestration, and modular extensibility.
+Centralized project manager that automates Python development tasks across the project lifecycle.
 
 ## Table of Contents
 
@@ -27,37 +27,30 @@ Project manager for standardizing and automating Python development workflows vi
 
 ### Motivation
 
-Managing a Python project throughout its life development cycle, from initial setup to deployment,
-requires coordinating heterogeneous tools, configurations and tasks (e.g. dependency management,
-testing, linting, documentation, packaging).
+Managing a Python project from setup to deployment requires coordinating many tools and tasks:
+managing dependencies, testing, linting, documenting, and packaging.
 
-In the absence of an integrated framework, these tasks are typically handled using disparate tools
-and ad hoc workflows, leading to fragmented project structures, increased maintenance burden, and
-inconsistent development practices.
+Without an integrated framework, these tasks rely on disparate tools and ad hoc workflows,
+which fragments project structure and increases maintenance cost.
 
-Existing solutions address isolated aspects of project management (see
-[ALTERNATIVES.md](docs/ALTERNATIVES.md)), but no framework unifies integrates all stages into a
-coherent Python-centric system.
+Existing solutions address isolated aspects (see [ALTERNATIVES.md](docs/ALTERNATIVES.md)),
+but none integrates all stages into a coherent system built around Python.
 
 ### Advantages
 
-Architekta introduces a centralized and extensible project management system that consolidates
-common development operations into a unified interface.
+Architekta consolidates development operations into a unified interface:
 
-It provides the following benefits:
-
-- **Integrated orchestrations**: Uniform interface to coordinate multiple development tasks
-  (environment setup, testing, linting, documentation, packaging).
-- **Automated workflows**: Predefined task sequences to reduce manual intervention and ensure
-  reproducible behaviors.
-- **Standardized structure**: Consistent configuration schemes and directory layouts to facilitate
-  collaboration and onboarding.
-- **Flexible customization**: Modular task definitions and plugin support for project-specific
-  overrides and extensions.
-- **Centralized maintenance**: Single source of truth for configuration to improve control and
-  long-term updates.
-- **Built-in compliance with development standards**: Integrated checks and defaults promoting
-  reproducibility, code quality, test coverage, documentation.
+- **Unified task coordination**: Single interface to set up environments, test, lint, document,
+  and package.
+- **Automated workflows**: Predefined task sequences that reduce manual steps and ensure
+  reproducible builds.
+- **Consistent project structure**: Standardized configuration and directory layouts across
+  projects.
+- **Modular customization**: Plugin support and overridable task definitions for needs specific
+  to each project.
+- **Centralized configuration**: Single source of truth for all tool settings.
+- **Built-in quality checks**: Defaults that enforce reproducible builds, code quality, test
+  coverage, and documented APIs.
 
 ---
 
@@ -83,19 +76,17 @@ It provides the following benefits:
 
 ## Installation
 
-To install the package and its dependencies, use one of the following methods:
+### Using pip
 
-### Using Pip Installs Packages
-
-Install the package from the GitHub repository URL via `pip`:
+Install from the GitHub repository:
 
 ```bash
 pip install git+https://github.com/esther-poniatowski/architekta.git
 ```
 
-### Using Conda
+### Using conda
 
-Install the package from the private channel eresthanaconda:
+Install from the eresthanaconda channel:
 
 ```bash
 conda install architekta -c eresthanaconda

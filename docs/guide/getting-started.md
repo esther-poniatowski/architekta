@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you get started with architekta.
+Getting started with architekta.
 
 ## Installation
 

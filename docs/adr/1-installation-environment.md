@@ -56,8 +56,7 @@ workflows.
 
 ### Installing Architekta in Each Project's Conda Environment
 
-- They run Architekta
--  and use to update the
+- Each project installs and runs Architekta independently to update the
   Conda environment.
 
 **Workflow:**
@@ -139,13 +138,14 @@ workflows.
 **Chosen option**: Hybrid Approach: Global CLI with Project Integration
 
 **Justification**: This approach provides the best balance between modularity, usability, and
-maintainability. It ensures that Architekta is always accessible while keeping individual project
-environments isolated and self-contained. It also extends better to use pip instead of conda.
+maintainability. The hybrid model ensures that Architekta is always accessible while keeping
+individual project environments isolated and self-contained. This strategy also extends better to
+pip instead of conda.
 
 ### Final Answers
 
 1. **How should users install and use Architekta?**
-   - They should install Architekta in a persistent `architekta-env` (if using conda) and use it to
+   - Architekta should be installed in a persistent `architekta-env` (if using conda) and used to
      initialize project environments where it will be included automatically.
 
 2. **How to prevent redundancy in installation while keeping the tool accessible?**

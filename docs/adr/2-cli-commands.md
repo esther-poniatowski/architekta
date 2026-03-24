@@ -67,8 +67,8 @@ architekta update [env | config | deps | docs | version]
 
 **Initialize a new project with a standardized structure:**
 
-- To be run within an existing directory named after the project. This is important so that it can
-  be used within an existing repository cloned from a github repository.
+- To be run within an existing directory named after the project. This constraint allows the command
+  to work within an existing repository cloned from a GitHub repository.
 - Create the central configuration file: `arkt.conf`.
 - Create  `config` directory with `dependencies/`: `runtime.yml`, `development.yml`
 
