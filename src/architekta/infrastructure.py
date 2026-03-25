@@ -1,15 +1,29 @@
 """Shared infrastructure utilities."""
 
+from dataclasses import dataclass
 import subprocess
 
 
-def run_command(
-    args: list[str],
-    error_cls: type[Exception],
-    context: str,
-) -> str:
-    """Run a subprocess command and return stdout, or raise on failure."""
+@dataclass(frozen=True)
+class CommandResult:
+    """Structured subprocess result for infrastructure callers."""
+
+    args: tuple[str, ...]
+    returncode: int
+    stdout: str
+    stderr: str
+
+    @property
+    def ok(self) -> bool:
+        return self.returncode == 0
+
+
+def run_command(args: list[str]) -> CommandResult:
+    """Run a subprocess command and preserve full diagnostics for the caller."""
     result = subprocess.run(args, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise error_cls(f"{context}: {result.stderr.strip()}")
-    return result.stdout.strip()
+    return CommandResult(
+        args=tuple(args),
+        returncode=result.returncode,
+        stdout=result.stdout.strip(),
+        stderr=result.stderr.strip(),
+    )

@@ -5,15 +5,7 @@ from typing import List, Optional
 
 import typer
 
-from architekta.github.exceptions import GitHubError
-from architekta.github.utils import (
-    extract_readme_description,
-    get_github_remote,
-    get_current_description,
-    set_description,
-    get_pyproject_description,
-    set_pyproject_description,
-)
+from architekta.github.operations import discover_sibling_projects, sync_descriptions as execute_sync_descriptions
 
 app = typer.Typer(name="github", help="GitHub repository management commands.")
 
@@ -28,67 +20,27 @@ def sync_descriptions(
     if projects:
         dirs = [p.resolve() for p in projects]
     else:
-        dirs = _discover_sibling_projects(Path.cwd())
+        dirs = discover_sibling_projects(Path.cwd())
 
     if not dirs:
         typer.echo("[WARN] No project directories found.", err=True)
         raise typer.Exit(code=1)
 
-    errors = 0
-    for project_dir in sorted(dirs):
-        name = project_dir.name
-        try:
-            readme_desc = extract_readme_description(project_dir)
-        except GitHubError as exc:
-            typer.echo(f"[SKIP] {name}: {exc}", err=True)
-            errors += 1
+    result = execute_sync_descriptions(dirs, dry_run=dry_run)
+    for entry in result.targets:
+        if entry.target == "readme":
+            typer.echo(f"[SKIP] {entry.project_name}: {entry.message}", err=True)
             continue
-
-        # --- GitHub target ---
-        try:
-            owner, repo = get_github_remote(project_dir)
-            current_gh = get_current_description(owner, repo)
-        except GitHubError as exc:
-            typer.echo(f"[SKIP] {name} [github]: {exc}", err=True)
-            errors += 1
+        if entry.outcome == "ok":
+            typer.echo(f"[OK]   {entry.project_name} [{entry.target}]: {entry.message}", err=True)
+        elif entry.outcome == "dry-run":
+            typer.echo(f"[DRY]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
+        elif entry.outcome == "updated":
+            typer.echo(f"[SET]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
+        elif entry.outcome == "error":
+            typer.echo(f"[ERR]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
         else:
-            if current_gh == readme_desc:
-                typer.echo(f"[OK]   {name} [github]: already in sync", err=True)
-            elif dry_run:
-                typer.echo(f"[DRY]  {name} [github]: \"{current_gh}\" -> \"{readme_desc}\"", err=True)
-            else:
-                try:
-                    set_description(owner, repo, readme_desc)
-                    typer.echo(f"[SET]  {name} [github]: \"{readme_desc}\"", err=True)
-                except GitHubError as exc:
-                    typer.echo(f"[ERR]  {name} [github]: {exc}", err=True)
-                    errors += 1
+            typer.echo(f"[SKIP] {entry.project_name} [{entry.target}]: {entry.message}", err=True)
 
-        # --- pyproject.toml target ---
-        current_pp = get_pyproject_description(project_dir)
-        if current_pp is None:
-            typer.echo(f"[SKIP] {name} [pyproject]: no pyproject.toml or no description field", err=True)
-        elif current_pp == readme_desc:
-            typer.echo(f"[OK]   {name} [pyproject]: already in sync", err=True)
-        elif dry_run:
-            typer.echo(f"[DRY]  {name} [pyproject]: \"{current_pp}\" -> \"{readme_desc}\"", err=True)
-        else:
-            try:
-                set_pyproject_description(project_dir, readme_desc)
-                typer.echo(f"[SET]  {name} [pyproject]: \"{readme_desc}\"", err=True)
-            except GitHubError as exc:
-                typer.echo(f"[ERR]  {name} [pyproject]: {exc}", err=True)
-                errors += 1
-
-    if errors:
+    if result.has_failures:
         raise typer.Exit(code=1)
-
-
-def _discover_sibling_projects(cwd: Path) -> list[Path]:
-    """Return sibling directories of ``cwd`` that contain a README.md."""
-    parent = cwd.parent
-    return [
-        d
-        for d in parent.iterdir()
-        if d.is_dir() and d != cwd and (d / "README.md").exists() and (d / ".git").is_dir()
-    ]

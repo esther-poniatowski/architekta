@@ -2,10 +2,36 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 from architekta.env.exceptions import InvalidPackagePath, CondaEnvNotFound
-from architekta.env.utils import PackageSpec, get_site_packages, resolve_package_paths
+from architekta.env.utils import (
+    PackageSpec,
+    is_base_conda_env,
+    is_current_conda_env,
+    resolve_package_paths,
+)
+
+
+@dataclass(frozen=True)
+class EditableInstallRequest:
+    """Explicit configuration for planning editable installs."""
+
+    workspace_root: Path
+    site_packages: Path
+    package_names: tuple[str, ...] = field(default_factory=tuple)
+    use_all: bool = False
+    custom_path: Path | None = None
+    include_tests: bool = False
+    force: bool = False
+    active_env: Optional[str] = None
+    conda_prefix: Optional[str] = None
+    target_env: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "workspace_root", self.workspace_root.expanduser().resolve())
+        object.__setattr__(self, "site_packages", self.site_packages.expanduser())
+        object.__setattr__(self, "package_names", tuple(self.package_names))
 
 
 @dataclass(frozen=True)
@@ -13,7 +39,7 @@ class InstallPlan:
     """A single editable-install action to execute."""
     package: PackageSpec
     pth_file: Path
-    lines: list[str]
+    lines: tuple[str, ...]
     skipped: bool = False
     skip_reason: str = ""
 
@@ -21,20 +47,11 @@ class InstallPlan:
 @dataclass(frozen=True)
 class InstallResult:
     """Result of planning an editable install."""
-    plans: list[InstallPlan]
+    plans: tuple[InstallPlan, ...]
     site_packages: Path
 
 
-def plan_editable_install(
-    packages: Optional[List[str]],
-    use_all: bool,
-    custom_path: Optional[Path],
-    include_tests: bool,
-    force: bool,
-    active_env: Optional[str],
-    conda_prefix: Optional[str],
-    target_env: Optional[str],
-) -> InstallResult:
+def plan_editable_install(request: EditableInstallRequest) -> InstallResult:
     """Plan editable installs without performing I/O.
 
     Raises
@@ -44,42 +61,46 @@ def plan_editable_install(
     InvalidPackagePath
         If a package path is invalid.
     """
-    from architekta.env.utils import is_current_conda_env, is_base_conda_env
+    if request.target_env is not None and not is_current_conda_env(request.target_env, request.active_env):
+        raise CondaEnvNotFound(f"Conda environment '{request.target_env}' is not active.")
 
-    if target_env is not None and not is_current_conda_env(target_env, active_env):
-        raise CondaEnvNotFound(f"Conda environment '{target_env}' is not active.")
-
-    if is_base_conda_env(conda_prefix):
+    if is_base_conda_env(request.conda_prefix):
         raise CondaEnvNotFound("Modifying the base Conda environment is not permitted.")
 
-    specs = resolve_package_paths(packages, use_all, custom_path)
-    site_pkgs = get_site_packages()
+    specs = resolve_package_paths(
+        workspace_root=request.workspace_root,
+        package_names=request.package_names,
+        use_all=request.use_all,
+        custom_path=request.custom_path,
+    )
 
     plans = []
     for spec in specs:
         if not spec.path.exists():
             raise InvalidPackagePath(f"Package path not found: {spec.path}")
 
-        pth_file = site_pkgs / f"{spec.name}.pth"
+        pth_file = request.site_packages / f"{spec.name}.pth"
         lines = [str(spec.path.resolve())]
 
-        if include_tests:
+        if request.include_tests:
             test_path = spec.path.parent / "tests"
             if test_path.exists():
                 lines.append(str(test_path.resolve()))
 
         skipped = False
         skip_reason = ""
-        if not force and pth_file.exists():
+        if not request.force and pth_file.exists():
             skipped = True
             skip_reason = f".pth file already exists: {pth_file} (use --force to overwrite)"
 
-        plans.append(InstallPlan(
-            package=spec,
-            pth_file=pth_file,
-            lines=lines,
-            skipped=skipped,
-            skip_reason=skip_reason,
-        ))
+        plans.append(
+            InstallPlan(
+                package=spec,
+                pth_file=pth_file,
+                lines=tuple(lines),
+                skipped=skipped,
+                skip_reason=skip_reason,
+            )
+        )
 
-    return InstallResult(plans=plans, site_packages=site_pkgs)
+    return InstallResult(plans=tuple(plans), site_packages=request.site_packages)

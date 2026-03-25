@@ -7,7 +7,8 @@ from typing import Optional, List
 import typer
 
 from architekta.env.exceptions import EnvError
-from architekta.env.operations import plan_editable_install
+from architekta.env.operations import EditableInstallRequest, plan_editable_install
+from architekta.env.utils import get_site_packages
 
 
 app = typer.Typer(name="env", help="Environment management commands for Architekta.")
@@ -26,8 +27,10 @@ def install_editable(
     ),
 ) -> None:
     try:
-        result = plan_editable_install(
-            packages=packages,
+        request = EditableInstallRequest(
+            workspace_root=Path.cwd(),
+            site_packages=get_site_packages(),
+            package_names=tuple(packages or []),
             use_all=all,
             custom_path=path,
             include_tests=include_tests,
@@ -36,6 +39,7 @@ def install_editable(
             conda_prefix=os.environ.get("CONDA_PREFIX"),
             target_env=env,
         )
+        result = plan_editable_install(request)
 
         for plan in result.plans:
             if plan.skipped:
