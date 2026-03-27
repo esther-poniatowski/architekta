@@ -17,6 +17,8 @@ import typer
 from . import info, __version__
 from .env.commands import app as env_app
 from .github.commands import app as github_app
+from .registry.commands import app as registry_app
+from .rename.commands import app as rename_app
 
 
 # --- Main application instance --------------------------------------------------------------------
@@ -52,3 +54,11 @@ app.add_typer(env_app, name="env")
 # --- Commands for GitHub Repository Management -------------------------------------------------------
 
 app.add_typer(github_app, name="github")
+
+# --- Commands for Project Registry Management -------------------------------------------------------
+
+app.add_typer(registry_app, name="registry")
+
+# --- Cross-surface Project Rename -----------------------------------------------------------------
+
+app.add_typer(rename_app, name="rename")

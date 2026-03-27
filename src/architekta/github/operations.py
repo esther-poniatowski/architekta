@@ -9,7 +9,9 @@ from architekta.github.utils import (
     extract_readme_description,
     get_github_remote,
     get_current_description,
+    set_description,
     get_pyproject_description,
+    set_pyproject_description,
 )
 
 

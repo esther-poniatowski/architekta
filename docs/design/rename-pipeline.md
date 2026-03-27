@@ -18,7 +18,7 @@ the project's name:
 | **Obsidian** | Vault name (derived from directory name) | — |
 | **Conda** | Environment name | `name: geonexus` in `environment.yml` |
 | **Self-references** | Mentions within the project's own files | README, CLAUDE.md, docs, settings, comments |
-| **Cross-references** | Mentions in other projects | DEPENDENTS.md, dependencies.md, `.gitmodules`, `environment.yml` pip paths, `pyproject.toml` optional deps, agent instructions |
+| **Cross-references** | Mentions in other projects | `dependencies.yml`, `.gitmodules`, `environment.yml` pip paths, `pyproject.toml` optional deps, agent instructions |
 
 Renaming a project requires propagating the new name consistently to every surface. The
 March 2026 rename of `RS-ctx-dep-net` to `geonexus` required 30+ file edits across
@@ -30,8 +30,8 @@ session.
 
 1. **No machine-readable project registry.** Project identity (name, path, dependencies,
    integration mechanisms) is scattered across human-readable Markdown files
-   (`dev/projects.md`, `dev/dependencies.md`, `dev/names.md`) and per-project files
-   (DEPENDENTS.md). These cannot be consumed by a rename pipeline.
+   (`dev/projects.md`, `dev/dependencies.md`, `dev/names.md`).
+   These cannot be consumed by a rename pipeline.
 
 2. **No canonical identity model.** There is no single declaration of "this project is
    called X, lives at Y, has conda env Z, and appears in these workspaces." Each surface
@@ -92,8 +92,8 @@ mechanism: editable-pip
 ### Requirements
 
 1. **Single source of truth.** One file declares all project identities and dependency
-   edges. Per-project files (DEPENDENTS.md, dependencies.md) become derived artifacts,
-   generated from the registry rather than maintained by hand.
+   edges. Per-project Markdown files become derived artifacts, generated from the
+   registry rather than maintained by hand.
 
 2. **Machine-readable.** TOML or YAML, parseable without custom logic.
 
@@ -230,7 +230,7 @@ The following files currently maintained by hand become _generated_ from the reg
 |---|---|---|
 | `dev/dependencies.md` | Ecosystem-wide dependency tables and paths | `architekta registry render --dependencies` |
 | `dev/projects.md` | Project inventory | `architekta registry render --projects` |
-| Per-project `DEPENDENTS.md` | Single-project dependent list | `architekta registry render --dependents <project>` |
+| `dev/dependencies.yml` (by-dependency view) | Single-project dependent list | `stelion workspace sync` (auto-detected from `extra_scan_dirs`) |
 
 This eliminates the consistency burden: after a rename, regenerating these files
 from the updated registry produces correct output everywhere.
@@ -367,7 +367,7 @@ rs_ctx_dep_net          →  geonexus
 |-----------|----------------|
 | `editable-pip` | `environment.yml` (absolute pip paths), `pyproject.toml` (optional dep group names) |
 | `git-submodule` | `.gitmodules` (URL field) |
-| All | `DEPENDENTS.md`, `CLAUDE.md`, `docs/`, `README.md`, `.claude/settings.json` |
+| All | `CLAUDE.md`, `docs/`, `README.md`, `.claude/settings.json` |
 
 #### Stage 8 — Submodules
 
@@ -396,7 +396,7 @@ _Case B: The renamed project vendors other projects whose files were modified in
 - Update the `path`, `github`, `conda_env`, `workspace` fields.
 - Append the old name to `aliases`.
 - Update all `[[dependencies]]` entries that reference the old name.
-- Regenerate derived artifacts (dependencies.md, projects.md, per-project DEPENDENTS.md).
+- Regenerate derived artifacts (dependencies.yml, projects.yml).
 
 #### Stage 10 — Commit
 
@@ -480,8 +480,7 @@ Self-references (23 occurrences in 11 files):
   ...
 
 Cross-references (18 occurrences in 9 files across 6 projects):
-  projects/morpha/DEPENDENTS.md:8    RS-ctx-dep-net → geonexus
-  projects/dev/dependencies.md:12    RS-ctx-dep-net → geonexus
+  projects/dev/dependencies.yml:12    RS-ctx-dep-net → geonexus
   ...
 
 Submodules:
@@ -598,7 +597,7 @@ needs, but in Markdown. The migration path:
 1. **Create `registry.toml`** by extracting data from `dev/projects.md`,
    `dev/dependencies.md`, and `dev/names.md`.
 2. **Validate** the registry against the actual filesystem and GitHub state.
-3. **Regenerate** `dependencies.md`, `projects.md`, and per-project `DEPENDENTS.md`
+3. **Regenerate** `dependencies.yml` and `projects.yml`
    from the registry, diff against the originals, and verify equivalence.
 4. **Switch maintenance** to the registry as the source of truth. The Markdown files
    become generated artifacts.
