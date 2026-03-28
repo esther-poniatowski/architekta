@@ -8,7 +8,7 @@
 
 ---
 
-Centralized project manager that automates Python development tasks across the project lifecycle.
+Automates Python development tasks from setup to deployment through a unified CLI.
 
 ## Table of Contents
 

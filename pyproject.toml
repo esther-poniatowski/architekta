@@ -18,7 +18,7 @@ authors = [{name = "Esther Poniatowski", email = "esther.poniatowski@ens.psl.eu"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = {file = "README.md", content-type = "text/markdown"}
-description = "Project manager for standardizing and automating Python development workflows"
+description = "Automates Python development tasks from setup to deployment through a unified CLI."
 keywords = ["best-practices", "configuration", "versioning", "project-management",
             "repository-management", "development-toolbox", "virtual-environment",
             "automated-workflow"]
