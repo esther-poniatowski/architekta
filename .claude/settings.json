@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(E=\"/Users/eresther/Documents/work/projects/eutaxis/src/eutaxis/data/domains\")",
+      "Bash(H=\"/Users/eresther/Documents/work/projects/hermeneia/docs\")",
+      "Bash(mv \"$E/software/standards/writing-standards.md\" \"$H/standards/writing-standards.md\")",
+      "Bash(mv \"$E/software/audits/audit-documentation.md\" \"$H/audits/audit-documentation.md\")",
+      "Bash(mv \"$E/math/rules/style-hard-rules.md\" \"$H/rules/math-style-hard-rules.md\")",
+      "Bash(E=\"/Users/eresther/Documents/work/projects/eutaxis\")",
+      "Bash(rm \"$E/src/eutaxis/data/domains/software/audits/audit-architecture.md\")",
+      "Bash(rm \"$E/src/eutaxis/data/domains/math/workflow/_index.md\")",
+      "Bash(rm \"$E/src/eutaxis/data/domains/pedagogy/_index.md\")",
+      "Bash(rm \"$E/src/eutaxis/data/domains/software/rules/_index.md\")",
+      "Read(//Users/eresther/Documents/work/projects/architekta/**)",
+      "Bash(printf 'y\\\\nq\\\\n')",
+      "Bash(git stash:*)",
+      "Bash(RESULT=$?)",
+      "Bash(exit $RESULT)",
+      "Bash(find /Users/eresther/Documents/work/projects/stelion -path */test* -name *sync* -type f)",
+      "Bash(ls PROPOSAL-REVIEW*.md)",
+      "Bash(git rebase:*)",
+      "Bash(git checkout:*)",
+      "Bash(python -m stelion workspace --help)",
+      "Bash(python -m pytest tests/test_stelion/test_architecture_fixes.py::test_pyproject_parser_fails_closed_on_invalid_toml -x -q)",
+      "Bash(python -m stelion workspace exec \"echo hello\" --dry-run --names stelion,architekta)",
+      "Bash(python -m stelion workspace exec \"echo hello\" --names stelion,architekta)",
+      "Bash(python -m stelion workspace commit -m \"test message\" --dry-run --names stelion,architekta)",
+      "Bash(python -m stelion workspace push --dry-run --names stelion,architekta)",
+      "Bash(python -m stelion workspace exec \"git log --oneline -1\" --pattern \"^s\" --git-only)",
+      "Bash(python -m stelion workspace exec \"echo test\" --names nonexistent)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(python -m pytest tests/ -q --ignore-glob=\"*test_pyproject*\" -k \"not invalid_toml\")"
+    ]
+  }
+}

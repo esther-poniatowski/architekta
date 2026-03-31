@@ -1,13 +1,13 @@
 # architekta
 
-Welcome to the architekta documentation.
+Automates Python development tasks from setup to deployment through a unified CLI.
 
 ```{toctree}
 :maxdepth: 2
 :caption: User Guide
 
-guide/getting-started
-commands
+guide/installation
+guide/usage
 ```
 
 ```{toctree}
