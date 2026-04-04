@@ -4,9 +4,10 @@
 [![Maintenance](https://img.shields.io/maintenance/yes/2026)]()
 [![Last Commit](https://img.shields.io/github/last-commit/esther-poniatowski/architekta)](https://github.com/esther-poniatowski/architekta/commits/main)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue)](https://www.python.org/)
-[![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
+[![License: GPL](https://img.shields.io/badge/License-GPL--3.0-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
 
-Automates Python development tasks from setup to deployment through a unified CLI.
+Automates common Python development tasks through a unified CLI: environment
+management, metadata synchronization, and cross-surface project renaming.
 
 ---
 
@@ -22,49 +23,98 @@ Automates Python development tasks from setup to deployment through a unified CL
 
 ## Overview
 
+Setting up and maintaining a Python project involves repetitive manual steps —
+installing packages in development mode, keeping metadata in sync across
+GitHub and `pyproject.toml`, and renaming a project across every surface where
+its name appears.  Architekta consolidates these operations into a single
+command-line tool so that each task runs reliably with one invocation.
+
 ### Motivation
 
-Managing a Python project from setup to deployment requires coordinating many tools
-and tasks: dependency management, testing, linting, documentation, and packaging.
-Without an integrated framework, these tasks rely on disparate tools and ad-hoc
-workflows, fragmenting project structure and increasing maintenance cost.
+Each of these tasks — editable installs, metadata synchronization, cross-surface
+renaming — relies on ad-hoc scripts or manual commands spread across multiple
+tools.  Errors compound when steps are forgotten or executed inconsistently, and
+the cost grows with the number of surfaces a project name touches (filesystem,
+GitHub, conda, workspace files, submodules, in-file references).
 
 ### Advantages
 
-- **Unified task coordination** — single entry point for environment setup, testing,
-  linting, documentation, and packaging.
-- **Automated workflows** — predefined task sequences that reduce manual steps and
-  ensure reproducible builds.
-- **Consistent project structure** — standardized configuration and directory layouts
-  across projects.
-- **Centralized configuration** — single source of truth for all tool settings.
+- **Single entry point** — one CLI consolidates environment setup, metadata
+  synchronization, and cross-surface rename.
+- **Dry-run on every operation** — all commands support `--dry-run` to preview
+  changes before applying them.
+- **Cross-surface coordination** — the rename pipeline propagates a name change
+  across filesystem, GitHub, conda, VS Code workspaces, submodules, and in-file
+  references in one invocation.
+- **Lightweight editable installs** — `.pth`-based mechanism avoids wheel and
+  source distribution builds required by `pip install -e`.
+- **README-driven metadata** — descriptions propagate from README first sentences
+  to GitHub and `pyproject.toml`, keeping metadata consistent without manual
+  duplication.
 
 ---
 
 ## Features
 
-- [ ] **Virtual environment and dependency management**: Synchronize Conda
-  specifications with `pyproject.toml`, install packages and scripts in editable mode,
-  inspect the environment for installed packages.
-- [ ] **Version control**: Configure Git repository to use a local commit message
-  template.
-- [ ] **Configuration**: Centralize modular configuration files in a `config/`
-  directory, synchronize overlapping configurations across tools.
+### Environment management
+
+- [x] Install packages in editable mode via `.pth` files, discover packages
+  under `src/`, and validate conda environments.
+- [ ] Install executable scripts in editable mode via symlinks in the conda
+  environment `bin/` directory.
+- [ ] Display packages and executables installed in the current conda
+  environment.
+- [ ] Synchronize Conda specifications with `pyproject.toml` to keep dependency
+  declarations consistent.
+
+### Metadata and version control
+
+- [x] Extract the first prose sentence from each project's README and propagate
+  descriptions to GitHub repositories and `pyproject.toml` fields.
+- [ ] Configure a Git repository to use a local commit message template.
+
+### Cross-surface rename
+
+- [x] Rename a project across filesystem, GitHub, conda, VS Code workspaces,
+  submodules, and in-file references through a nine-stage pipeline.
+  - Propagate changes to affected projects specified via `--affected-path`.
+  - Preview the full plan with `--dry-run` before applying any mutation.
+
+### Configuration
+
+- [ ] Centralize modular configuration files in a `config/` directory and
+  synchronize overlapping settings across tools.
+- [ ] Override tool behavior with custom settings (e.g. `force-exclude` in
+  mypy).
+- [ ] Define custom command aliases in a central manifest that route to the
+  tools involved in the workspace through a uniform interface, replacing ad-hoc
+  invocations.
 
 ---
 
 ## Quick Start
 
-Install all packages under `src/` in editable mode:
+### CLI
 
 ```sh
 architekta env install-editable --all
 ```
 
-Display version and platform diagnostics:
+```sh
+architekta github sync-descriptions --dry-run
+```
 
 ```sh
-architekta info
+architekta rename old-name new-name --dry-run
+```
+
+### Application Programming Interface
+
+```python
+from architekta import info
+
+print(info())
+# architekta 0.0.0 | Platform: Darwin Python 3.12.8
 ```
 
 ---
@@ -75,11 +125,8 @@ architekta info
 | ----- | ------- |
 | [Installation](docs/guide/installation.md) | Prerequisites, pip/conda/source setup |
 | [Usage](docs/guide/usage.md) | Workflows and detailed examples |
-| [CLI Reference](docs/guide/cli-reference.md) | Full command registry and options |
+| [CLI Reference](docs/guide/cli-reference.md) | Full command reference and options |
 | [Configuration](docs/guide/configuration.md) | Configuration files and environment variables |
-
-Full API documentation and rendered guides are also available at
-[esther-poniatowski.github.io/architekta](https://esther-poniatowski.github.io/architekta/).
 
 ---
 
