@@ -104,3 +104,11 @@ def plan_editable_install(request: EditableInstallRequest) -> InstallResult:
         )
 
     return InstallResult(plans=tuple(plans), site_packages=request.site_packages)
+
+
+def execute_install_plans(result: InstallResult) -> None:
+    """Execute planned editable installs by writing .pth files."""
+    for plan in result.plans:
+        if plan.skip_reason:
+            continue
+        plan.pth_file.write_text("\n".join(plan.lines))

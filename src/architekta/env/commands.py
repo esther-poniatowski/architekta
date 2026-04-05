@@ -1,4 +1,4 @@
-""" """
+"""CLI commands for environment management."""
 
 import os
 from pathlib import Path
@@ -6,8 +6,9 @@ from typing import Optional, List
 
 import typer
 
+from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.env.exceptions import EnvError
-from architekta.env.operations import EditableInstallRequest, plan_editable_install
+from architekta.env.operations import EditableInstallRequest, execute_install_plans, plan_editable_install
 from architekta.env.utils import get_site_packages
 
 
@@ -43,21 +44,28 @@ def install_editable(
 
         for plan in result.plans:
             if plan.skipped:
-                typer.echo(f"[ERROR] {plan.skip_reason}", err=True)
+                emit(DiagnosticEntry(
+                    DiagnosticLevel.ERROR, plan.package.name, plan.skip_reason,
+                ))
                 raise typer.Exit(code=3)
 
             if dry_run:
-                typer.echo(
-                    f"[DRY-RUN] Would write to {plan.pth_file}:\n  " + "\n  ".join(plan.lines),
-                    err=True,
-                )
+                emit(DiagnosticEntry(
+                    DiagnosticLevel.DRY, plan.package.name,
+                    f"Would write to {plan.pth_file}:\n  " + "\n  ".join(plan.lines),
+                ))
                 continue
 
-            plan.pth_file.write_text("\n".join(plan.lines))
-            typer.echo(f"[OK] Installed {plan.package.name} in editable mode: {plan.pth_file}", err=True)
+        if not dry_run:
+            execute_install_plans(result)
+            for plan in result.plans:
+                emit(DiagnosticEntry(
+                    DiagnosticLevel.OK, plan.package.name,
+                    f"Installed in editable mode: {plan.pth_file}",
+                ))
 
         raise typer.Exit(code=0)
 
     except EnvError as e:
-        typer.echo(f"[ERROR] {e}", err=True)
+        emit(DiagnosticEntry(DiagnosticLevel.ERROR, "", str(e)))
         raise typer.Exit(code=2)

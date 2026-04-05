@@ -1,6 +1,7 @@
 # architekta
 
-Automates Python development tasks from setup to deployment through a unified CLI.
+Automates common Python development tasks through a unified CLI: environment
+management, metadata synchronization, and cross-surface project renaming.
 
 ```{toctree}
 :maxdepth: 2
@@ -8,6 +9,8 @@ Automates Python development tasks from setup to deployment through a unified CL
 
 guide/installation
 guide/usage
+guide/cli-reference
+guide/configuration
 ```
 
 ```{toctree}

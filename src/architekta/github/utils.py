@@ -1,6 +1,5 @@
 """Utility functions for GitHub repository metadata operations."""
 
-import re
 from pathlib import Path
 
 import tomlkit
@@ -13,7 +12,7 @@ from architekta.github.exceptions import (
     MetadataParseError,
     RemoteNotFound,
 )
-from architekta.infrastructure import run_command
+from architekta.infrastructure import GithubSlug, parse_github_remote, run_command
 
 
 def extract_readme_description(project_dir: Path) -> str:
@@ -54,17 +53,22 @@ def _run_checked(args: list[str], error_cls: type[GitHubError], context: str) ->
     return result.stdout
 
 
-def get_github_remote(project_dir: Path) -> tuple[str, str]:
-    """Parse the origin remote URL to extract the GitHub owner and repo name."""
-    stdout = _run_checked(
-        ["git", "-C", str(project_dir), "remote", "get-url", "origin"],
-        error_cls=RemoteNotFound,
-        context=f"No git remote 'origin' in {project_dir}",
-    )
-    match = re.search(r"github\.com[:/](.+?)/(.+?)(?:\.git)?$", stdout)
-    if not match:
-        raise RemoteNotFound(f"Cannot parse GitHub owner/repo from remote URL: {stdout}")
-    return match.group(1), match.group(2)
+def get_github_remote(project_dir: Path) -> GithubSlug:
+    """Parse the origin remote URL to extract the GitHub owner and repo.
+
+    Returns a ``GithubSlug`` with ``owner`` and ``repo`` fields.
+
+    Raises
+    ------
+    RemoteNotFound
+        If the git remote cannot be read or the URL is not a GitHub URL.
+    """
+    slug = parse_github_remote(project_dir)
+    if slug is None:
+        raise RemoteNotFound(
+            f"Cannot detect GitHub owner/repo from git remote in {project_dir}"
+        )
+    return slug
 
 
 def get_current_description(owner: str, repo: str) -> str:

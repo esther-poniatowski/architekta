@@ -89,6 +89,16 @@ mechanism: editable-pip
 
 ## Registry Design
 
+> **Note (2026).** The machine-readable project registry described below was intentionally
+> **not** implemented in architekta. Cross-project ecosystem concerns (project topology,
+> dependency edges, derived artifact generation) belong to stelion and scholia, which own
+> workspace management and reference material, respectively. The rename pipeline in
+> architekta therefore accepts project identity and affected projects via CLI flags
+> (``--path``, ``--affected-path``, ``--alias``, ``--github-owner``, ``--conda-env``,
+> ``--workspace``) rather than reading a registry. The sections that follow remain as
+> historical design context; the implemented pipeline is described under
+> **Rename Pipeline** with 9 stages (no registry stage).
+
 ### Requirements
 
 1. **Single source of truth.** One file declares all project identities and dependency
@@ -241,7 +251,7 @@ from the updated registry produces correct output everywhere.
 
 ### Overview
 
-The pipeline consists of ten ordered stages. Each stage is idempotent: running the
+The pipeline consists of nine ordered stages. Each stage is idempotent: running the
 pipeline a second time with the same arguments produces no additional changes.
 
 ```
@@ -255,9 +265,9 @@ pipeline a second time with the same arguments produces no additional changes.
 └─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
                                                                      │
                                                                      ▼
-                                          ┌──────────────┐     ┌──────────────┐
-                                          │ 9. Registry   │ ──▶ │ 10. Commit    │
-                                          └──────────────┘     └──────────────┘
+                                                              ┌──────────────┐
+                                                              │  9. Commit    │
+                                                              └──────────────┘
 ```
 
 ### Stage details
@@ -387,27 +397,18 @@ _Case B: The renamed project vendors other projects whose files were modified in
 - In the renamed project, `git submodule update --remote <vendor/submodule>` to
   advance the submodule pointer.
 
-#### Stage 9 — Registry
-
-**Purpose.** Update the registry itself.
-
-**Actions:**
-- Change the project's key in the `[projects]` table.
-- Update the `path`, `github`, `conda_env`, `workspace` fields.
-- Append the old name to `aliases`.
-- Update all `[[dependencies]]` entries that reference the old name.
-- Regenerate derived artifacts (dependencies.yml, projects.yml).
-
-#### Stage 10 — Commit
+#### Stage 9 — Commit
 
 **Purpose.** Create commits in all affected repositories.
 
 **Actions:**
 - In each affected repository, stage the modified files and create a commit with a
   standardized message:
-  ```
+
+  ```text
   chore: rename <old_name> references to <new_name>
   ```
+
 - Optionally push all affected repositories (with `--push` flag).
 
 **Constraints:**
@@ -428,30 +429,24 @@ architekta rename <old_name> <new_name> [OPTIONS]
 
 | Flag | Description |
 |------|-------------|
+| `--path <path>` | Path to the project directory (default: current directory). |
+| `--affected-path <path>` | Path to a project affected by the rename. Repeatable. |
+| `--alias <name>` | Former project name to also replace. Repeatable. |
+| `--github-owner <name>` | GitHub owner (auto-detected from git remote). |
+| `--conda-env <name>` | Current conda environment name. |
+| `--workspace <file>` | VS Code workspace filename. |
 | `--dry-run` | Show the full `RenamePlan` without executing any mutations. |
-| `--push` | Push commits in all affected repositories after Stage 10. |
+| `--push` | Push commits in all affected repositories after Stage 9. |
 | `--skip <stage>` | Skip a specific stage (e.g., `--skip conda` if the project has no conda env). |
-| `--registry <path>` | Path to the registry file (default: `dev/registry.toml`). |
 | `--no-commit` | Execute all stages but skip the final commit stage. |
 | `--verbose` | Print each file modification as it occurs. |
 
 ### Auxiliary commands
 
-```sh
-# Validate the registry (check all paths exist, no duplicate names/aliases, edges reference
-# existing projects).
-architekta registry validate
-
-# Regenerate derived artifacts from the registry.
-architekta registry render [--dependencies] [--projects] [--dependents <project>]
-
-# Audit the ecosystem for stale references to any alias in the registry.
-architekta registry audit
-```
-
-The `registry audit` command searches all tracked files in all registered projects for
-any string matching an alias. It reports findings without modifying files, serving as a
-post-rename verification and as a periodic hygiene check.
+Registry-related auxiliary commands (validate, render, audit) are **not** part of
+architekta. Those responsibilities belong to stelion (workspace management) and
+scholia (reference material). Post-rename auditing of stale references across the
+ecosystem is performed via those tools.
 
 ---
 
@@ -499,19 +494,21 @@ aborts with a diagnostic message. No partial state is created.
 ### Clean-tree requirement
 
 All affected repositories must have clean working trees (no uncommitted changes) before
-the pipeline starts. This ensures that the commits in Stage 10 contain only rename-related
+the pipeline starts. This ensures that the commits in Stage 9 contain only rename-related
 changes and that no user work is accidentally staged.
 
 ### Staged file tracking
 
-A `RenamePlan` object tracks every file modification made by every stage. Stage 10 uses
+A `RenamePlan` object tracks every file modification made by every stage. Stage 9 uses
 this manifest to stage exactly the modified files — never `git add -A`.
 
 ### Post-rename audit
 
-After completing a rename, the pipeline automatically runs `registry audit` to verify
-that no stale references remain. Any residual matches (e.g., in binary files, git history,
-or external systems) are reported for manual attention.
+Post-rename auditing for stale references is performed externally via stelion and
+scholia. Architekta's rename pipeline reports all file edits it made through the
+`PipelineReport`, which callers can inspect to verify completeness. Any residual
+matches (e.g., in binary files, git history, or external systems) are flagged by
+the external audit tooling.
 
 ---
 
@@ -519,22 +516,25 @@ or external systems) are reported for manual attention.
 
 ### Module structure
 
-```
+```text
 src/architekta/
 ├── rename/
 │   ├── __init__.py
 │   ├── commands.py          # CLI entry point (typer)
-│   ├── plan.py              # RenamePlan construction and dry-run rendering
-│   ├── stages.py            # Stage implementations (validate, filesystem, git, ...)
+│   ├── context.py           # RenameContext and build_rename_context
+│   ├── models.py            # Value objects, stage/pipeline reports, stage constants
+│   ├── pipeline.py          # Stage registry and orchestrator
+│   ├── plan.py              # Backward-compatibility re-exports
+│   ├── render.py            # Dry-run rendering
+│   ├── stages.py            # Stage planners and executor
 │   └── patterns.py          # Name pattern generation and replacement logic
-├── registry/
-│   ├── __init__.py
-│   ├── commands.py          # CLI entry points (validate, render, audit)
-│   ├── schema.py            # Registry TOML parsing and validation
-│   ├── render.py            # Derived artifact generation (Markdown tables)
-│   └── audit.py             # Stale-reference scanner
 └── ...
 ```
+
+Cross-project identity concerns (project registry, dependency topology, derived
+artifact generation) are **not** implemented here. Those belong to stelion
+(workspace management) and scholia (reference material). Architekta's rename
+command accepts project identity via CLI flags instead of reading a registry.
 
 ### Dependencies on existing architekta modules
 
@@ -560,8 +560,7 @@ The topological order of stages is load-bearing:
 - **Git remote (3) before Submodules (8)**: Submodule URL updates must use the new remote.
 - **Cross-references (7) before Submodules (8)**: Source repo changes must be committed
   and pushed before the vendoring project can update its submodule pointer.
-- **Registry (9) after all content changes**: The registry update captures the final state.
-- **Commit (10) last**: All file modifications must be complete before committing.
+- **Commit (9) last**: All file modifications must be complete before committing.
 
 ### Pattern generation
 

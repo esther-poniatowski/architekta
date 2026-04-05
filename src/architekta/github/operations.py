@@ -1,4 +1,4 @@
-"""Pure domain operations for GitHub synchronization."""
+"""Application-layer orchestration for GitHub synchronization."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -171,10 +171,10 @@ def _sync_target(
 
 
 def _read_github_description(project_dir: Path) -> str:
-    owner, repo = get_github_remote(project_dir)
-    return get_current_description(owner, repo)
+    slug = get_github_remote(project_dir)
+    return get_current_description(slug.owner, slug.repo)
 
 
 def _write_github_description(project_dir: Path, description: str) -> None:
-    owner, repo = get_github_remote(project_dir)
-    set_description(owner, repo, description)
+    slug = get_github_remote(project_dir)
+    set_description(slug.owner, slug.repo, description)

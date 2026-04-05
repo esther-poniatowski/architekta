@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import typer
 
+from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.github.operations import discover_sibling_projects, sync_descriptions as execute_sync_descriptions
 
 app = typer.Typer(name="github", help="GitHub repository management commands.")
@@ -23,24 +24,28 @@ def sync_descriptions(
         dirs = discover_sibling_projects(Path.cwd())
 
     if not dirs:
-        typer.echo("[WARN] No project directories found.", err=True)
+        emit(DiagnosticEntry(DiagnosticLevel.WARN, "", "No project directories found."))
         raise typer.Exit(code=1)
 
     result = execute_sync_descriptions(dirs, dry_run=dry_run)
+
+    _OUTCOME_TO_LEVEL = {
+        "ok": DiagnosticLevel.OK,
+        "dry-run": DiagnosticLevel.DRY,
+        "updated": DiagnosticLevel.SET,
+        "error": DiagnosticLevel.ERROR,
+        "skipped": DiagnosticLevel.SKIP,
+    }
+
     for entry in result.targets:
         if entry.target == "readme":
-            typer.echo(f"[SKIP] {entry.project_name}: {entry.message}", err=True)
+            emit(DiagnosticEntry(
+                DiagnosticLevel.SKIP, entry.project_name, entry.message,
+            ))
             continue
-        if entry.outcome == "ok":
-            typer.echo(f"[OK]   {entry.project_name} [{entry.target}]: {entry.message}", err=True)
-        elif entry.outcome == "dry-run":
-            typer.echo(f"[DRY]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
-        elif entry.outcome == "updated":
-            typer.echo(f"[SET]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
-        elif entry.outcome == "error":
-            typer.echo(f"[ERR]  {entry.project_name} [{entry.target}]: {entry.message}", err=True)
-        else:
-            typer.echo(f"[SKIP] {entry.project_name} [{entry.target}]: {entry.message}", err=True)
+        context = f"{entry.project_name} [{entry.target}]"
+        level = _OUTCOME_TO_LEVEL.get(entry.outcome, DiagnosticLevel.SKIP)
+        emit(DiagnosticEntry(level, context, entry.message))
 
     if result.has_failures:
         raise typer.Exit(code=1)
