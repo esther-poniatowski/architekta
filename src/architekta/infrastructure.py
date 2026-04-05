@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import subprocess
 
 
@@ -68,3 +69,46 @@ def is_text_file(path: Path) -> bool:
         return True
     except (UnicodeDecodeError, OSError):
         return False
+
+
+# ── GitHub slug ───────────────────────────────────────────────────────────────
+
+
+_GITHUB_URL_RE = re.compile(r"github\.com[:/](.+?)/(.+?)(?:\.git)?$")
+
+
+@dataclass(frozen=True)
+class GithubSlug:
+    """A validated GitHub owner/repo identifier."""
+
+    owner: str
+    repo: str
+
+    def __str__(self) -> str:
+        return f"{self.owner}/{self.repo}"
+
+    @classmethod
+    def from_url(cls, url: str) -> "GithubSlug | None":
+        """Extract owner/repo from a GitHub URL, or return ``None``."""
+        match = _GITHUB_URL_RE.search(url)
+        if not match:
+            return None
+        return cls(owner=match.group(1), repo=match.group(2))
+
+    @property
+    def ssh_url(self) -> str:
+        """Return the SSH clone URL for this repository."""
+        return f"git@github.com:{self}.git"
+
+
+def parse_github_remote(repo_path: Path) -> "GithubSlug | None":
+    """Read the origin remote URL and extract the GitHub owner/repo slug.
+
+    Returns ``None`` if the remote cannot be read or is not a GitHub URL.
+    """
+    result = run_command(
+        ["git", "-C", str(repo_path), "remote", "get-url", "origin"],
+    )
+    if not result.ok:
+        return None
+    return GithubSlug.from_url(result.stdout.strip())
