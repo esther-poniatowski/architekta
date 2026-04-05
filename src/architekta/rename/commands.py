@@ -5,7 +5,9 @@ from typing import List, Optional
 
 import typer
 
-from architekta.rename.plan import render_dry_run
+from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
+from architekta.infrastructure import GithubSlug, parse_github_remote
+from architekta.rename.render import render_dry_run
 from architekta.rename.pipeline import RenameError, run_rename_pipeline
 
 app = typer.Typer(
@@ -14,17 +16,37 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-_DEFAULT_REGISTRY = Path("dev/registry.toml")
-
 
 @app.callback(invoke_without_command=True)
 def rename(
     ctx: typer.Context,
     old_name: Optional[str] = typer.Argument(
-        None, help="Current canonical project name (registry key)."
+        None, help="Current project name."
     ),
     new_name: Optional[str] = typer.Argument(
-        None, help="New canonical project name."
+        None, help="New project name."
+    ),
+    path: Path = typer.Option(
+        ".", "--path", help="Path to the project directory (default: current directory)."
+    ),
+    affected_path: Optional[List[Path]] = typer.Option(
+        None,
+        "--affected-path",
+        help="Path to a project affected by the rename. Repeatable.",
+    ),
+    alias: Optional[List[str]] = typer.Option(
+        None,
+        "--alias",
+        help="Former project name to also replace. Repeatable.",
+    ),
+    github_owner: Optional[str] = typer.Option(
+        None, "--github-owner", help="GitHub owner (auto-detected from git remote).",
+    ),
+    conda_env: Optional[str] = typer.Option(
+        None, "--conda-env", help="Current conda environment name.",
+    ),
+    workspace: Optional[str] = typer.Option(
+        None, "--workspace", help="VS Code workspace filename.",
     ),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show the full plan without applying any changes."
@@ -36,11 +58,6 @@ def rename(
         None,
         "--skip",
         help="Stage name to skip. Repeatable: --skip conda --skip commit.",
-    ),
-    registry: Path = typer.Option(
-        _DEFAULT_REGISTRY,
-        "--registry",
-        help="Path to the registry TOML file.",
     ),
     no_commit: bool = typer.Option(
         False, "--no-commit", help="Execute all stages but skip the commit stage."
@@ -57,11 +74,25 @@ def rename(
         typer.echo(ctx.get_help())
         raise typer.Exit(code=1)
 
+    project_path = Path(path).resolve()
+
+    # Resolve GitHub slug at the CLI layer.
+    github_slug = parse_github_remote(project_path)
+    if github_owner is not None:
+        # Explicit owner overrides auto-detection.
+        repo_name = github_slug.repo if github_slug else old_name
+        github_slug = GithubSlug(owner=github_owner, repo=repo_name)
+
     try:
         report = run_rename_pipeline(
             old_name=old_name,
             new_name=new_name,
-            registry_path=registry,
+            project_path=project_path,
+            affected_paths=tuple(affected_path or []),
+            aliases=tuple(alias or []),
+            github_slug=github_slug,
+            conda_env=conda_env,
+            workspace=workspace,
             dry_run=dry_run,
             push=push,
             skip_stages=set(skip) if skip else None,
@@ -69,7 +100,7 @@ def rename(
             verbose=verbose,
         )
     except RenameError as exc:
-        typer.echo(f"[ERR]  {exc}", err=True)
+        emit(DiagnosticEntry(DiagnosticLevel.ERROR, "", str(exc)))
         raise typer.Exit(code=1)
 
     if dry_run:
@@ -83,15 +114,15 @@ def rename(
 
 
 def _print_report(report: "object", *, verbose: bool) -> None:
-    from architekta.rename.plan import PipelineReport, StageReport
+    from architekta.rename.models import PipelineReport, StageReport
 
     assert isinstance(report, PipelineReport)
     for stage in report.stages:
         assert isinstance(stage, StageReport)
         if stage.skipped:
-            typer.echo(f"[SKIP] {stage.name}: {stage.skip_reason}", err=True)
+            emit(DiagnosticEntry(DiagnosticLevel.SKIP, stage.name, stage.skip_reason))
         elif stage.error:
-            typer.echo(f"[ERR]  {stage.name}: {stage.error}", err=True)
+            emit(DiagnosticEntry(DiagnosticLevel.ERROR, stage.name, stage.error))
         else:
             n_edits = len(stage.file_edits)
             n_files = len({e.path for e in stage.file_edits})
@@ -104,14 +135,14 @@ def _print_report(report: "object", *, verbose: bool) -> None:
             if n_cmds:
                 summary.append(f"{n_cmds} command(s)")
             detail = ", ".join(summary) if summary else "no changes"
-            typer.echo(f"[OK]   {stage.name}: {detail}", err=True)
+            emit(DiagnosticEntry(DiagnosticLevel.OK, stage.name, detail))
 
             if verbose:
-                for rename in stage.path_renames:
-                    typer.echo(f"       mv {rename.old} → {rename.new}", err=True)
+                for rename_op in stage.path_renames:
+                    typer.echo(f"       mv {rename_op.old} \u2192 {rename_op.new}", err=True)
                 for edit in stage.file_edits:
                     typer.echo(
                         f"       {edit.path}:{edit.line_number}  "
-                        f"{edit.old_line!r} → {edit.new_line!r}",
+                        f"{edit.old_line!r} \u2192 {edit.new_line!r}",
                         err=True,
                     )

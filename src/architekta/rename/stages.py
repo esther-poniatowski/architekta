@@ -9,34 +9,44 @@ write I/O is performed inside any planner.
 ordered steps from a ``StagePlan`` to the filesystem and runs any shell
 commands.
 
-Ordering constraints (load-bearing):
-  2. Filesystem  → before all others (renames the directory)
-  3. Git remote  → before Submodules (submodule URLs need the new remote)
-  7. Cross-refs  → before Submodules (source repo changes must be staged first)
-  9. Registry    → after all content changes
-  10. Commit     → last (all mutations must be complete)
+There are 9 stages in total. Ordering constraints (load-bearing):
+  2. Filesystem  -> before all others (renames the directory)
+  3. Git remote  -> before Submodules (submodule URLs need the new remote)
+  7. Cross-refs  -> before Submodules (source repo changes must be staged first)
+  8. Submodules  -> after cross-refs
+  9. Commit      -> last (all mutations must be complete)
 """
 
 from pathlib import Path
 from typing import Union
 
 from architekta.infrastructure import GitError, is_text_file, list_tracked_files, run_command
-from architekta.registry.schema import update_registry_for_rename
-from architekta.rename.patterns import PatternPair, apply_patterns_to_text
-from architekta.rename.plan import (
+from architekta.rename.context import RenameContext
+from architekta.rename.models import (
     AffectedProject,
+    CommandOutcome,
     FileEdit,
+    FileProcessingResult,
     PathRename,
     PendingWrite,
     PipelineReport,
-    RenameContext,
     ShellCommand,
     StagePlan,
     StageReport,
+    STAGE_CROSS_REFS,
+    STAGE_VALIDATE,
+    STAGE_FILESYSTEM,
+    STAGE_GIT_REMOTE,
+    STAGE_WORKSPACES,
+    STAGE_CONDA,
+    STAGE_SELF_REFS,
+    STAGE_SUBMODULES,
+    STAGE_COMMIT,
 )
+from architekta.rename.patterns import PatternPair, apply_patterns_to_text
 
 
-# ── Stage 1: Validate ───────────────────────────────────────────────────────────
+# ── Stage 1: Validate ─────────────────────────────────────────────────────────
 
 
 def plan_validate(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -71,16 +81,16 @@ def plan_validate(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
     if errors:
         report = StageReport(
             stage_id=1,
-            name="validate",
+            name=STAGE_VALIDATE,
             error="\n".join(errors),
         )
     else:
-        report = StageReport(stage_id=1, name="validate")
+        report = StageReport(stage_id=1, name=STAGE_VALIDATE)
 
     return StagePlan(report=report, steps=())
 
 
-# ── Stage 2: Filesystem ─────────────────────────────────────────────────────────
+# ── Stage 2: Filesystem ───────────────────────────────────────────────────────
 
 
 def plan_filesystem(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -88,13 +98,13 @@ def plan_filesystem(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     rename = PathRename(old=ctx.old_project_path, new=ctx.new_project_path)
     report = StageReport(
         stage_id=2,
-        name="filesystem",
+        name=STAGE_FILESYSTEM,
         path_renames=(rename,),
     )
     return StagePlan(report=report, steps=(rename,))
 
 
-# ── Stage 3: Git remote ─────────────────────────────────────────────────────────
+# ── Stage 3: Git remote ───────────────────────────────────────────────────────
 
 
 def plan_git_remote(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -107,7 +117,7 @@ def plan_git_remote(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
             "-f", f"name={ctx.new_name}",
         ),
     )
-    new_url = f"git@github.com:{ctx.new_github}.git"
+    new_url = ctx.new_github.ssh_url
     # cwd is new_project_path: this command runs after stage_filesystem renames
     # the directory, so the repo is at new_project_path at execution time.
     set_url_cmd = ShellCommand(
@@ -117,13 +127,13 @@ def plan_git_remote(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     )
     report = StageReport(
         stage_id=3,
-        name="git-remote",
+        name=STAGE_GIT_REMOTE,
         commands=(patch_cmd, set_url_cmd),
     )
     return StagePlan(report=report, steps=(patch_cmd, set_url_cmd))
 
 
-# ── Stage 4: Workspaces ─────────────────────────────────────────────────────────
+# ── Stage 4: Workspaces ───────────────────────────────────────────────────────
 
 
 def plan_workspaces(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -131,11 +141,12 @@ def plan_workspaces(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     path_renames: list[PathRename] = []
     file_edits: list[FileEdit] = []
     steps: list[Union[PathRename, PendingWrite]] = []
+    warnings: list[str] = []
 
     if ctx.old_workspace and ctx.new_workspace:
         # Candidates at their current (pre-rename) locations.
         workspace_candidates = [
-            ctx.registry_root / ctx.old_workspace,
+            ctx.workspace_root / ctx.old_workspace,
             ctx.old_project_path / ctx.old_workspace,
         ]
         for ws_path in workspace_candidates:
@@ -149,26 +160,30 @@ def plan_workspaces(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
                 path_renames.append(rename)
                 steps.append(rename)
 
-    # Scan all .code-workspace files under the registry root.
-    for ws_file in ctx.registry_root.rglob("*.code-workspace"):
+    # Scan all .code-workspace files under the workspace root.
+    for ws_file in ctx.workspace_root.rglob("*.code-workspace"):
         if not is_text_file(ws_file):
             continue
-        edits, pending = _collect_edits_and_write(ws_file, ctx.patterns, ctx)
-        if edits:
-            file_edits.extend(edits)
-            if pending is not None:
-                steps.append(pending)
+        fpr = _collect_edits_and_write(ws_file, ctx.patterns, ctx)
+        if fpr.error:
+            warnings.append(fpr.error)
+            continue
+        if fpr.edits:
+            file_edits.extend(fpr.edits)
+            if fpr.pending_write is not None:
+                steps.append(fpr.pending_write)
 
     report = StageReport(
         stage_id=4,
-        name="workspaces",
+        name=STAGE_WORKSPACES,
         path_renames=tuple(path_renames),
         file_edits=tuple(file_edits),
+        warnings=warnings,
     )
     return StagePlan(report=report, steps=tuple(steps))
 
 
-# ── Stage 5: Conda environment ──────────────────────────────────────────────────
+# ── Stage 5: Conda environment ────────────────────────────────────────────────
 
 
 def plan_conda(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -176,7 +191,7 @@ def plan_conda(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
     if not ctx.old_conda_env or not ctx.new_conda_env:
         report = StageReport(
             stage_id=5,
-            name="conda",
+            name=STAGE_CONDA,
             skipped=True,
             skip_reason="no conda_env declared for this project",
         )
@@ -188,13 +203,13 @@ def plan_conda(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
     )
     report = StageReport(
         stage_id=5,
-        name="conda",
+        name=STAGE_CONDA,
         commands=(rename_cmd,),
     )
     return StagePlan(report=report, steps=(rename_cmd,))
 
 
-# ── Stage 6: Self-references ────────────────────────────────────────────────────
+# ── Stage 6: Self-references ──────────────────────────────────────────────────
 
 
 def plan_self_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -206,13 +221,14 @@ def plan_self_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan
     """
     file_edits: list[FileEdit] = []
     steps: list[PendingWrite] = []
+    warnings: list[str] = []
 
     try:
         tracked = list_tracked_files(ctx.old_project_path)
     except GitError as exc:
         report = StageReport(
             stage_id=6,
-            name="self-refs",
+            name=STAGE_SELF_REFS,
             error=str(exc),
         )
         return StagePlan(report=report, steps=())
@@ -220,17 +236,25 @@ def plan_self_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan
     for file_path in tracked:
         if not is_text_file(file_path):
             continue
-        edits, pending = _collect_edits_and_write(file_path, ctx.patterns, ctx)
-        if edits:
-            file_edits.extend(edits)
-            if pending is not None:
-                steps.append(pending)
+        fpr = _collect_edits_and_write(file_path, ctx.patterns, ctx)
+        if fpr.error:
+            warnings.append(fpr.error)
+            continue
+        if fpr.edits:
+            file_edits.extend(fpr.edits)
+            if fpr.pending_write is not None:
+                steps.append(fpr.pending_write)
 
-    report = StageReport(stage_id=6, name="self-refs", file_edits=tuple(file_edits))
+    report = StageReport(
+        stage_id=6,
+        name=STAGE_SELF_REFS,
+        file_edits=tuple(file_edits),
+        warnings=warnings,
+    )
     return StagePlan(report=report, steps=tuple(steps))
 
 
-# ── Stage 7: Cross-references ───────────────────────────────────────────────────
+# ── Stage 7: Cross-references ─────────────────────────────────────────────────
 
 
 def plan_cross_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -238,6 +262,7 @@ def plan_cross_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     all_edits: list[FileEdit] = []
     steps: list[PendingWrite] = []
     errors: list[str] = []
+    warnings: list[str] = []
 
     for ap in ctx.affected_projects:
         try:
@@ -249,22 +274,26 @@ def plan_cross_refs(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
             if not is_text_file(file_path):
                 continue
             # Affected projects do not move; no remapping needed.
-            edits, pending = _collect_edits_and_write(file_path, ctx.patterns, ctx)
-            if edits:
-                all_edits.extend(edits)
-                if pending is not None:
-                    steps.append(pending)
+            fpr = _collect_edits_and_write(file_path, ctx.patterns, ctx)
+            if fpr.error:
+                warnings.append(fpr.error)
+                continue
+            if fpr.edits:
+                all_edits.extend(fpr.edits)
+                if fpr.pending_write is not None:
+                    steps.append(fpr.pending_write)
 
     report = StageReport(
         stage_id=7,
-        name="cross-refs",
+        name=STAGE_CROSS_REFS,
         file_edits=tuple(all_edits),
         error="\n".join(errors) if errors else None,
+        warnings=warnings,
     )
     return StagePlan(report=report, steps=tuple(steps))
 
 
-# ── Stage 8: Submodules ─────────────────────────────────────────────────────────
+# ── Stage 8: Submodules ───────────────────────────────────────────────────────
 
 
 def plan_submodules(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -272,7 +301,7 @@ def plan_submodules(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     if not ctx.submodule_refs:
         report = StageReport(
             stage_id=8,
-            name="submodules",
+            name=STAGE_SUBMODULES,
             skipped=True,
             skip_reason="no git-submodule edges for this project",
         )
@@ -280,16 +309,19 @@ def plan_submodules(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
 
     file_edits: list[FileEdit] = []
     steps: list[Union[PendingWrite, ShellCommand]] = []
+    warnings: list[str] = []
 
     # Case A: Another project vendors the renamed project via .gitmodules.
     for ref in ctx.submodule_refs:
         gitmodules = ref.host_path / ".gitmodules"
         if gitmodules.exists():
-            edits, pending = _collect_edits_and_write(gitmodules, ctx.patterns, ctx)
-            if edits:
-                file_edits.extend(edits)
-                if pending is not None:
-                    steps.append(pending)
+            fpr = _collect_edits_and_write(gitmodules, ctx.patterns, ctx)
+            if fpr.error:
+                warnings.append(fpr.error)
+            elif fpr.edits:
+                file_edits.extend(fpr.edits)
+                if fpr.pending_write is not None:
+                    steps.append(fpr.pending_write)
 
         sync_cmd = ShellCommand(
             description=f"Sync submodules in {ref.host_name}",
@@ -300,7 +332,7 @@ def plan_submodules(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
 
     # Case B: The renamed project itself hosts submodule(s) from affected projects.
     # After the filesystem rename, those submodule pointers need advancing.
-    cross_refs_report = accumulated.find_stage("cross-refs")
+    cross_refs_report = accumulated.find_stage(STAGE_CROSS_REFS)
     if cross_refs_report is not None:
         modified_paths = {e.path for e in cross_refs_report.file_edits}
         for ap in ctx.affected_projects:
@@ -324,63 +356,15 @@ def plan_submodules(ctx: RenameContext, accumulated: PipelineReport) -> StagePla
     commands = tuple(s for s in steps if isinstance(s, ShellCommand))
     report = StageReport(
         stage_id=8,
-        name="submodules",
+        name=STAGE_SUBMODULES,
         file_edits=tuple(file_edits),
         commands=commands,
+        warnings=warnings,
     )
     return StagePlan(report=report, steps=tuple(steps))
 
 
-# ── Stage 9: Registry ───────────────────────────────────────────────────────────
-
-
-def plan_registry(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
-    """Plan updating registry.toml to reflect the rename."""
-    old_relative = ctx.old_project_path.relative_to(ctx.registry_root)
-    new_relative = old_relative.parent / ctx.new_name
-
-    try:
-        old_content = ctx.registry_path.read_text()
-    except OSError as exc:
-        report = StageReport(stage_id=9, name="registry", error=str(exc))
-        return StagePlan(report=report, steps=())
-
-    new_content = update_registry_for_rename(
-        content=old_content,
-        old_name=ctx.old_name,
-        new_name=ctx.new_name,
-        new_path=new_relative.as_posix(),
-        new_github=str(ctx.new_github),
-        new_conda_env=ctx.new_conda_env,
-        new_workspace=ctx.new_workspace,
-    )
-
-    # Compute line-level diff for the report.
-    registry_edits: list[FileEdit] = []
-    for i, (old_line, new_line) in enumerate(
-        zip(old_content.splitlines(), new_content.splitlines()), start=1
-    ):
-        if old_line != new_line:
-            registry_edits.append(
-                FileEdit(
-                    path=ctx.registry_path,
-                    line_number=i,
-                    old_line=old_line,
-                    new_line=new_line,
-                )
-            )
-
-    pending = PendingWrite(path=ctx.registry_path, content=new_content)
-    report = StageReport(
-        stage_id=9,
-        name="registry",
-        file_edits=tuple(registry_edits),
-        description=f"Update {ctx.registry_path.name}: rename {ctx.old_name!r} → {ctx.new_name!r}",
-    )
-    return StagePlan(report=report, steps=(pending,))
-
-
-# ── Stage 10: Commit ────────────────────────────────────────────────────────────
+# ── Stage 9: Commit ───────────────────────────────────────────────────────────
 
 
 def plan_commit(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
@@ -426,35 +410,43 @@ def plan_commit(ctx: RenameContext, accumulated: PipelineReport) -> StagePlan:
             ))
 
     report = StageReport(
-        stage_id=10,
-        name="commit",
+        stage_id=9,
+        name=STAGE_COMMIT,
         commands=tuple(steps),
     )
     return StagePlan(report=report, steps=tuple(steps))
 
 
-# ── Executor ─────────────────────────────────────────────────────────────────
+# ── Executor ──────────────────────────────────────────────────────────────────
 
 
-def execute_stage_plan(plan: StagePlan) -> None:
+def execute_stage_plan(plan: StagePlan) -> list[CommandOutcome]:
     """Apply all execution steps in a stage plan in their declared order.
 
     This is the single execution entry point for all stages.  Called by the
     pipeline orchestrator once per stage (only in non-dry-run mode).
+
+    Returns a list of ``CommandOutcome`` objects for any ``ShellCommand``
+    steps (including unchecked commands that failed).
     """
+    outcomes: list[CommandOutcome] = []
     for step in plan.steps:
-        if isinstance(step, PendingWrite):
-            step.path.write_text(step.content, encoding="utf-8")
-        elif isinstance(step, PathRename):
-            step.old.rename(step.new)
+        if isinstance(step, (PendingWrite, PathRename)):
+            step.execute()
         elif isinstance(step, ShellCommand):
-            if step.checked:
-                _run_shell_checked(step)
-            else:
-                run_command(list(step.args), cwd=step.cwd)
+            result = step.execute()
+            outcomes.append(CommandOutcome(
+                args=result.args,
+                returncode=result.returncode,
+                ok=result.ok,
+                error=result.stderr or result.stdout or "",
+            ))
+        else:
+            raise TypeError(f"Unknown execution step type: {type(step).__name__}")
+    return outcomes
 
 
-# ── Private helpers ─────────────────────────────────────────────────────────────
+# ── Private helpers ───────────────────────────────────────────────────────────
 
 
 def _remap_to_new(path: Path, old_base: Path, new_base: Path) -> Path:
@@ -469,19 +461,24 @@ def _collect_edits_and_write(
     file_path: Path,
     patterns: tuple[PatternPair, ...],
     ctx: RenameContext,
-) -> tuple[list[FileEdit], PendingWrite | None]:
+) -> FileProcessingResult:
     """Read a file, apply patterns, return line-level edits and a PendingWrite.
 
     The write target is remapped from ``old_project_path`` to
     ``new_project_path`` when ``file_path`` lives inside the renamed directory,
     so the executor writes to the correct post-rename location.
 
-    Returns ([], None) on read error or when no patterns match.
+    Returns a ``FileProcessingResult`` with an error message on read failure,
+    or empty edits when no patterns match.
     """
     try:
         content = file_path.read_text(encoding="utf-8")
-    except OSError:
-        return [], None
+    except OSError as exc:
+        return FileProcessingResult(
+            edits=[],
+            pending_write=None,
+            error=f"Cannot read {file_path}: {exc}",
+        )
 
     lines = content.splitlines(keepends=True)
     write_path = _remap_to_new(file_path, ctx.old_project_path, ctx.new_project_path)
@@ -500,22 +497,13 @@ def _collect_edits_and_write(
         new_lines.append(new_line)
 
     if not edits:
-        return [], None
+        return FileProcessingResult(edits=[], pending_write=None, error=None)
 
-    return edits, PendingWrite(path=write_path, content="".join(new_lines))
-
-
-def _run_shell_checked(cmd: ShellCommand) -> None:
-    """Run a ShellCommand and raise RuntimeError if it fails."""
-    result = run_command(list(cmd.args), cwd=cmd.cwd)
-    if not result.ok:
-        detail = result.stderr or result.stdout or "command failed"
-        raise RuntimeError(
-            f"Stage command failed: {cmd.description}\n"
-            f"  args: {cmd.args}\n"
-            f"  exit: {result.returncode}\n"
-            f"  detail: {detail}"
-        )
+    return FileProcessingResult(
+        edits=edits,
+        pending_write=PendingWrite(path=write_path, content="".join(new_lines)),
+        error=None,
+    )
 
 
 def _find_repo_root(path: Path) -> Path | None:

@@ -33,8 +33,8 @@ def generate_patterns(
     new_name:
         The canonical new project name.
     old_aliases:
-        Former names that should also be replaced (from the registry aliases
-        list). Each alias maps to new_name.
+        Former names that should also be replaced.  Each alias maps to
+        new_name.
     old_abs_path, new_abs_path:
         Absolute filesystem paths to the project directory.
     old_conda_env, new_conda_env:
