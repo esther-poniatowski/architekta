@@ -29,7 +29,37 @@
       "Bash(python -m stelion workspace exec \"git log --oneline -1\" --pattern \"^s\" --git-only)",
       "Bash(python -m stelion workspace exec \"echo test\" --names nonexistent)",
       "Bash(echo \"exit: $?\")",
-      "Bash(python -m pytest tests/ -q --ignore-glob=\"*test_pyproject*\" -k \"not invalid_toml\")"
+      "Bash(python -m pytest tests/ -q --ignore-glob=\"*test_pyproject*\" -k \"not invalid_toml\")",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion add docs/audits/audit-component.md docs/audits/audit-interaction.md docs/audits/audit-model.md)",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion commit -m ':*)",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion add src/stelion/workspace/domain/bulk.py src/stelion/workspace/domain/sync.py src/stelion/workspace/domain/project.py src/stelion/workspace/domain/dependency.py src/stelion/workspace/domain/comparison.py)",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion add src/stelion/workspace/application/generation.py src/stelion/workspace/application/protocols.py src/stelion/workspace/application/sync.py src/stelion/workspace/application/environment.py src/stelion/workspace/application/bulk.py src/stelion/workspace/application/bootstrap.py src/stelion/workspace/application/comparison.py src/stelion/workspace/application/registration.py src/stelion/workspace/infrastructure/dependency_scanners.py)",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion add src/stelion/workspace/infrastructure/structured_parsers.py src/stelion/workspace/infrastructure/renderers/vscode.py src/stelion/workspace/infrastructure/renderers/yaml.py src/stelion/workspace/infrastructure/pyproject_parser.py src/stelion/workspace/adapters/_cli_common.py src/stelion/workspace/adapters/bulk_commands.py src/stelion/workspace/adapters/comparison_commands.py src/stelion/workspace/composition.py tests/test_stelion/test_architecture_fixes.py)",
+      "Bash(git -C /Users/eresther/Documents/work/projects/stelion log --oneline -5)",
+      "Bash(python -m pytest /Users/eresther/Documents/work/projects/stelion/tests -q)",
+      "Read(//Users/eresther/Documents/skills/**)",
+      "Read(//Users/eresther/Documents/skills/terpsichore/**)",
+      "Read(//Users/eresther/Documents/knowledge/chronicles/**)",
+      "Bash(mv projtemp.code-workspace vitruv.code-workspace)",
+      "Bash(mv src/package_name src/vitruv)",
+      "Bash(rm src/vitruv/module_name.py)",
+      "Bash(mkdir -p .claude)",
+      "Bash(find /Users/eresther/Documents/work/projects/glossa -type f -name \"*.py\" -exec grep -l \"cache\\\\|\\\\.cache\\\\|incremental\" {} \\\\;)",
+      "Bash(python -m glossa lint /Users/eresther/Documents/work/projects/khimera/src --format json)",
+      "Bash(python -m glossa fix /Users/eresther/Documents/work/projects/khimera/src --dry-run)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(python -m glossa lint /Users/eresther/Documents/work/projects/khimera/src --format json --ignore D306)",
+      "Bash(find /Users/eresther/Documents/work/projects/glossa -name \"*.py\" -type f -exec grep -l \"\\\\.code\\\\|rule_code\" {} \\\\;)",
+      "Bash(python -m glossa lint /Users/eresther/Documents/work/projects/khimera/src)",
+      "Bash(python -m glossa lint /Users/eresther/Documents/work/projects/khimera/src --ignore missing-period)",
+      "Bash(python -m glossa lint /Users/eresther/Documents/work/projects/khimera/src --select presence --format json)",
+      "Bash(python -m pytest --tb=short)"
+    ],
+    "additionalDirectories": [
+      "/Users/eresther/Documents/skills/terpsichore",
+      "/Users/eresther/Documents/knowledge/chronicles",
+      "/Users/eresther/Documents/work/projects/hermeneia",
+      "/tmp"
     ]
   }
 }
