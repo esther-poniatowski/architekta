@@ -1,16 +1,13 @@
-"""
-Command-line interface for the `architekta` package.
+"""Command-line interface for the ``architekta`` package.
 
-Defines commands available via `python -m architekta` or `architekta` if installed as a script.
+Defines commands available via ``python -m architekta`` or ``architekta`` if
+installed as a script. Top-level commands:
 
-Commands
---------
-info : Display diagnostic information.
+- ``info`` — Display diagnostic information.
 
-See Also
---------
-typer.Typer
-    Library for building CLI applications: https://typer.tiangolo.com/
+Subcommand groups are mounted on the root application from sibling packages:
+``env`` (environment management), ``github`` (repository management), and
+``rename`` (cross-surface project rename pipeline).
 """
 
 import typer

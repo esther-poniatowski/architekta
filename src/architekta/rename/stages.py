@@ -10,11 +10,12 @@ ordered steps from a ``StagePlan`` to the filesystem and runs any shell
 commands.
 
 There are 9 stages in total. Ordering constraints (load-bearing):
-  2. Filesystem  -> before all others (renames the directory)
-  3. Git remote  -> before Submodules (submodule URLs need the new remote)
-  7. Cross-refs  -> before Submodules (source repo changes must be staged first)
-  8. Submodules  -> after cross-refs
-  9. Commit      -> last (all mutations must be complete)
+
+- Filesystem (stage 2) before all others; the directory rename must happen first.
+- Git remote (stage 3) before Submodules; submodule URLs need the new remote.
+- Cross-refs (stage 7) before Submodules; source repo changes must be staged first.
+- Submodules (stage 8) after cross-refs.
+- Commit (stage 9) last; all mutations must be complete.
 """
 
 from pathlib import Path
