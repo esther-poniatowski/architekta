@@ -3,29 +3,30 @@
 Automates common Python development tasks through a unified CLI: environment
 management, metadata synchronization, and cross-surface project renaming.
 
-```{toctree}
-:maxdepth: 2
-:caption: User Guide
+## User Guide
 
-guide/installation
-guide/usage
-guide/cli-reference
-guide/configuration
-```
+- [Installation](guide/installation.md)
+- [Usage](guide/usage.md)
+- [CLI Reference](guide/cli-reference.md)
+- [Configuration](guide/configuration.md)
 
-```{toctree}
-:maxdepth: 2
-:caption: Architecture Decisions
+## Architecture Decisions
 
-adr/0-alternatives
-adr/1-installation-environment
-adr/2-cli-commands
-adr/adr-template
-```
+- [ADR 0: Alternative Tools to Architekta](adr/0-alternatives.md)
+- [ADR 0001: Installation and Environment Management](adr/1-installation-environment.md)
+- [ADR 0001: CLI Commands](adr/2-cli-commands.md)
+- [ADR Template](adr/adr-template.md)
 
-```{toctree}
-:maxdepth: 2
-:caption: API Reference
+## Internals
 
-api/index
-```
+- [Cross-Surface Project Rename Pipeline](internals/rename-pipeline.md)
+
+## Audits
+
+- [Component Audit](audits/audit-component.md)
+- [Interaction Audit](audits/audit-interaction.md)
+- [Model Audit](audits/audit-model.md)
+
+## API Reference
+
+- [API Reference](api/index.md)

@@ -1,3 +1,28 @@
+<a id="api-reference"></a>
+
 # API Reference
 
-API documentation for architekta.
+* [Top-level](top-level.md)
+  * [Package](top-level.md#module-architekta)
+  * [CLI](top-level.md#module-architekta.cli)
+  * [Diagnostics](top-level.md#module-architekta.diagnostics)
+  * [Infrastructure](top-level.md#module-architekta.infrastructure)
+* [Environment](env.md)
+  * [Commands](env.md#module-architekta.env.commands)
+  * [Operations](env.md#module-architekta.env.operations)
+  * [Utilities](env.md#module-architekta.env.utils)
+  * [Exceptions](env.md#module-architekta.env.exceptions)
+* [GitHub](github.md)
+  * [Commands](github.md#module-architekta.github.commands)
+  * [Operations](github.md#module-architekta.github.operations)
+  * [Utilities](github.md#module-architekta.github.utils)
+  * [Exceptions](github.md#module-architekta.github.exceptions)
+* [Rename](rename.md)
+  * [Commands](rename.md#module-architekta.rename.commands)
+  * [Models](rename.md#module-architekta.rename.models)
+  * [Patterns](rename.md#module-architekta.rename.patterns)
+  * [Context](rename.md#module-architekta.rename.context)
+  * [Plan](rename.md#module-architekta.rename.plan)
+  * [Stages](rename.md#module-architekta.rename.stages)
+  * [Pipeline](rename.md#module-architekta.rename.pipeline)
+  * [Rendering](rename.md#module-architekta.rename.render)

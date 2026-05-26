@@ -25,6 +25,7 @@ dependencies:
   - sphinx-needs           # for requirements and specifications in Sphinx
   - esbonio                # language server for Sphinx
   - myst-parser            # Markdown support for Sphinx
+  - sphinx-markdown-builder # Markdown output builder for Sphinx
   # CLI
   - typer                  # command line interface
   - rich                   # rich text formatting for CLI
