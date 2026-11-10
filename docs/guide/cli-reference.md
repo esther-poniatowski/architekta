@@ -18,13 +18,13 @@ source distribution.
 **Inputs**:
 
 - Positional argument(s): Package name(s) to install, when the command is run in the root directory
-  of the project and the package is in the standard `src` layout. If neither `--path` nor `--all` is
+  of the project and the package is in the standard `src` layout. If neither `--package-dir` nor `--all` is
   specified, at least one package name must be provided as a positional argument.
 
 - `--all` (optional, default=False): Install all packages located in the `src/` directory in
   editable mode.
 
-- `--path PATH` (optional): Path to the package directory, if not in the standard layout. If
+- `--package-dir PATH` (optional): Path to the package directory, if not in the standard layout. If
   specified, the command operates in single-package mode and ignores other positional arguments or
   `--all`.
 
@@ -148,7 +148,7 @@ mutation.
 
 - `NEW_NAME` (positional, required): Target project name.
 
-- `--path PATH` (optional, default=`.`): Path to the project directory.
+- `--root PATH` (optional, default=`.`): Path to the project directory.
 
 - `--affected-path PATH` (optional, repeatable): Path to a sibling project affected by the rename.
   The pipeline scans each affected project for cross-references. Repeat the flag for multiple
@@ -164,7 +164,7 @@ mutation.
   name differs from the project name. The pipeline derives the new environment name by replacing the
   old project name within the value.
 
-- `--workspace FILENAME` (optional): VS Code workspace filename (e.g. `myproject.code-workspace`).
+- `--workspace-file FILENAME` (optional): VS Code workspace filename (e.g. `myproject.code-workspace`).
   The pipeline renames the file and updates references inside all `.code-workspace` files under the
   workspace root.
 

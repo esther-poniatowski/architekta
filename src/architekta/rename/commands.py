@@ -9,6 +9,7 @@ from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.infrastructure import GithubSlug, parse_github_remote
 from architekta.rename.render import render_dry_run
 from architekta.rename.pipeline import RenameError, run_rename_pipeline
+from architekta.renamed_options import resolve_renamed_option
 
 app = typer.Typer(
     name="rename",
@@ -26,9 +27,10 @@ def rename(
     new_name: Optional[str] = typer.Argument(
         None, help="New project name."
     ),
-    path: Path = typer.Option(
-        ".", "--path", help="Path to the project directory (default: current directory)."
+    root: Path = typer.Option(
+        ".", "--root", help="Path to the project directory (default: current directory)."
     ),
+    path: Optional[Path] = typer.Option(None, "--path", hidden=True),
     affected_path: Optional[List[Path]] = typer.Option(
         None,
         "--affected-path",
@@ -45,9 +47,10 @@ def rename(
     conda_env: Optional[str] = typer.Option(
         None, "--conda-env", help="Current conda environment name.",
     ),
-    workspace: Optional[str] = typer.Option(
-        None, "--workspace", help="VS Code workspace filename.",
+    workspace_file: Optional[str] = typer.Option(
+        None, "--workspace-file", help="VS Code workspace filename.",
     ),
+    workspace: Optional[str] = typer.Option(None, "--workspace", hidden=True),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show the full plan without applying any changes."
     ),
@@ -74,7 +77,9 @@ def rename(
         typer.echo(ctx.get_help())
         raise typer.Exit(code=1)
 
-    project_path = Path(path).resolve()
+    root = resolve_renamed_option(ctx, "root", root, "--path", path)
+    workspace_file = resolve_renamed_option(ctx, "workspace_file", workspace_file, "--workspace", workspace)
+    project_path = Path(root).resolve()
 
     # Resolve GitHub slug at the CLI layer.
     github_slug = parse_github_remote(project_path)
@@ -92,7 +97,7 @@ def rename(
             aliases=tuple(alias or []),
             github_slug=github_slug,
             conda_env=conda_env,
-            workspace=workspace,
+            workspace=workspace_file,
             dry_run=dry_run,
             push=push,
             skip_stages=set(skip) if skip else None,

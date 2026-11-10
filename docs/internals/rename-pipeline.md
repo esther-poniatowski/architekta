@@ -94,8 +94,8 @@ mechanism: editable-pip
 > dependency edges, derived artifact generation) belong to stelion and scholia, which own
 > workspace management and reference material, respectively. The rename pipeline in
 > architekta therefore accepts project identity and affected projects via CLI flags
-> (``--path``, ``--affected-path``, ``--alias``, ``--github-owner``, ``--conda-env``,
-> ``--workspace``) rather than reading a registry. The sections that follow remain as
+> (``--root``, ``--affected-path``, ``--alias``, ``--github-owner``, ``--conda-env``,
+> ``--workspace-file``) rather than reading a registry. The sections that follow remain as
 > historical design context; the implemented pipeline is described under
 > **Rename Pipeline** with 9 stages (no registry stage).
 
@@ -429,12 +429,12 @@ architekta rename <old_name> <new_name> [OPTIONS]
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Path to the project directory (default: current directory). |
+| `--root <path>` | Path to the project directory (default: current directory). |
 | `--affected-path <path>` | Path to a project affected by the rename. Repeatable. |
 | `--alias <name>` | Former project name to also replace. Repeatable. |
 | `--github-owner <name>` | GitHub owner (auto-detected from git remote). |
 | `--conda-env <name>` | Current conda environment name. |
-| `--workspace <file>` | VS Code workspace filename. |
+| `--workspace-file <file>` | VS Code workspace filename. |
 | `--dry-run` | Show the full `RenamePlan` without executing any mutations. |
 | `--push` | Push commits in all affected repositories after Stage 9. |
 | `--skip <stage>` | Skip a specific stage (e.g., `--skip conda` if the project has no conda env). |

@@ -53,7 +53,7 @@ architekta env install-editable my_package
 Install from an arbitrary directory:
 
 ```sh
-architekta env install-editable --path ./libs/my_package
+architekta env install-editable --package-dir ./libs/my_package
 ```
 
 Preview the paths that would be written without modifying the environment:
@@ -120,7 +120,7 @@ architekta rename old-name new-name --dry-run
 Execute the rename from a specific project directory:
 
 ```sh
-architekta rename old-name new-name --path /path/to/project
+architekta rename old-name new-name --root /path/to/project
 ```
 
 Propagate cross-references into sibling projects affected by the rename:
@@ -152,7 +152,7 @@ architekta rename old-name new-name --conda-env old-name-dev
 Rename the VS Code workspace file along with the project:
 
 ```sh
-architekta rename old-name new-name --workspace old-name.code-workspace
+architekta rename old-name new-name --workspace-file old-name.code-workspace
 ```
 
 Skip the conda environment rename stage:

@@ -10,6 +10,7 @@ from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.env.exceptions import EnvError
 from architekta.env.operations import EditableInstallRequest, execute_install_plans, plan_editable_install
 from architekta.env.utils import get_site_packages
+from architekta.renamed_options import resolve_renamed_option
 
 
 app = typer.Typer(name="env", help="Environment management commands for Architekta.")
@@ -17,9 +18,13 @@ app = typer.Typer(name="env", help="Environment management commands for Architek
 
 @app.command(name="install-editable", help="Install packages in editable mode.")
 def install_editable(
+    ctx: typer.Context,
     packages: List[str] = typer.Argument(None, help="Name(s) of the package(s) to install."),
     all: bool = typer.Option(False, "--all", help="Install all packages in the src directory."),
-    path: Optional[Path] = typer.Option(None, "--path", help="Path to a single package directory."),
+    package_dir: Optional[Path] = typer.Option(
+        None, "--package-dir", help="Path to a single package directory."
+    ),
+    path: Optional[Path] = typer.Option(None, "--path", hidden=True),
     include_tests: bool = typer.Option(False, "--include-tests", help="Include test directory."),
     env: Optional[str] = typer.Option(None, "--env", help="Target conda environment name."),
     force: bool = typer.Option(False, "--force", help="Overwrite existing .pth file if present."),
@@ -27,13 +32,14 @@ def install_editable(
         False, "--dry-run", help="Preview installation paths without modifying environment."
     ),
 ) -> None:
+    package_dir = resolve_renamed_option(ctx, "package_dir", package_dir, "--path", path)
     try:
         request = EditableInstallRequest(
             workspace_root=Path.cwd(),
             site_packages=get_site_packages(),
             package_names=tuple(packages or []),
             use_all=all,
-            custom_path=path,
+            custom_path=package_dir,
             include_tests=include_tests,
             force=force,
             active_env=os.environ.get("CONDA_DEFAULT_ENV"),
