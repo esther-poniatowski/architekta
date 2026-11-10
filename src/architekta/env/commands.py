@@ -1,4 +1,9 @@
-"""CLI commands for environment management."""
+"""CLI commands for environment management.
+
+The project folder of ``install-editable`` is resolved from ``--root``, then from the environment
+variable ``ARCHITEKTA_ROOT``, then from the current folder. A path given on the command line, such as
+``--package-dir``, is read from the current folder.
+"""
 
 import os
 from pathlib import Path
@@ -10,7 +15,6 @@ from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.env.exceptions import EnvError
 from architekta.env.operations import EditableInstallRequest, execute_install_plans, plan_editable_install
 from architekta.env.utils import get_site_packages
-from architekta.renamed_options import resolve_renamed_option
 
 
 app = typer.Typer(name="env", help="Environment management commands for Architekta.")
@@ -18,24 +22,33 @@ app = typer.Typer(name="env", help="Environment management commands for Architek
 
 @app.command(name="install-editable", help="Install packages in editable mode.")
 def install_editable(
-    ctx: typer.Context,
     packages: List[str] = typer.Argument(None, help="Name(s) of the package(s) to install."),
     all: bool = typer.Option(False, "--all", help="Install all packages in the src directory."),
     package_dir: Optional[Path] = typer.Option(
-        None, "--package-dir", help="Path to a single package directory."
+        None, "--package-dir", help="Path to a single package directory.", resolve_path=True,
     ),
-    path: Optional[Path] = typer.Option(None, "--path", hidden=True),
+    root: Path = typer.Option(
+        ".",
+        "--root",
+        "-r",
+        envvar="ARCHITEKTA_ROOT",
+        help="Project folder whose src/ holds the packages (default: ARCHITEKTA_ROOT, else the "
+        "current folder).",
+        file_okay=False,
+        resolve_path=True,
+    ),
     include_tests: bool = typer.Option(False, "--include-tests", help="Include test directory."),
     env: Optional[str] = typer.Option(None, "--env", help="Target conda environment name."),
-    force: bool = typer.Option(False, "--force", help="Overwrite existing .pth file if present."),
+    force: bool = typer.Option(
+        False, "--force", help="Overwrite an existing .pth file whose content differs."
+    ),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Preview installation paths without modifying environment."
     ),
 ) -> None:
-    package_dir = resolve_renamed_option(ctx, "package_dir", package_dir, "--path", path)
     try:
         request = EditableInstallRequest(
-            workspace_root=Path.cwd(),
+            workspace_root=root,
             site_packages=get_site_packages(),
             package_names=tuple(packages or []),
             use_all=all,
@@ -53,7 +66,7 @@ def install_editable(
                 emit(DiagnosticEntry(
                     DiagnosticLevel.ERROR, plan.package.name, plan.skip_reason,
                 ))
-                raise typer.Exit(code=3)
+                raise typer.Exit(code=2)
 
             if dry_run:
                 emit(DiagnosticEntry(

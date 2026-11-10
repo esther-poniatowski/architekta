@@ -24,8 +24,8 @@ def sync_descriptions(
         dirs = discover_sibling_projects(Path.cwd())
 
     if not dirs:
-        emit(DiagnosticEntry(DiagnosticLevel.WARN, "", "No project directories found."))
-        raise typer.Exit(code=1)
+        emit(DiagnosticEntry(DiagnosticLevel.ERROR, "", "No project directories found."))
+        raise typer.Exit(code=2)
 
     result = execute_sync_descriptions(dirs, dry_run=dry_run)
 

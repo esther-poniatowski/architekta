@@ -429,13 +429,14 @@ architekta rename <old_name> <new_name> [OPTIONS]
 
 | Flag | Description |
 |------|-------------|
-| `--root <path>` | Path to the project directory (default: current directory). |
+| `-r`, `--root <path>` | Path to the project directory (default: `ARCHITEKTA_ROOT`, else the current directory). |
 | `--affected-path <path>` | Path to a project affected by the rename. Repeatable. |
 | `--alias <name>` | Former project name to also replace. Repeatable. |
 | `--github-owner <name>` | GitHub owner (auto-detected from git remote). |
 | `--conda-env <name>` | Current conda environment name. |
 | `--workspace-file <file>` | VS Code workspace filename. |
 | `--dry-run` | Show the full `RenamePlan` without executing any mutations. |
+| `--yes` | Answer the confirmation; required without a terminal, unless `--dry-run` is given. |
 | `--push` | Push commits in all affected repositories after Stage 9. |
 | `--skip <stage>` | Skip a specific stage (e.g., `--skip conda` if the project has no conda env). |
 | `--no-commit` | Execute all stages but skip the final commit stage. |

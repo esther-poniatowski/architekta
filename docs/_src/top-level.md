@@ -29,15 +29,6 @@ Top-level package entry points and shared infrastructure.
    :show-inheritance:
 ```
 
-## Renamed Options
-
-```{eval-rst}
-.. automodule:: architekta.renamed_options
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ## Infrastructure
 
 ```{eval-rst}

@@ -26,6 +26,7 @@ Spell-checking dictionaries are stored under `config/dictionaries/`:
 
 | Variable            | Description                                                        | Default | Required |
 | ------------------- | ------------------------------------------------------------------ | ------- | -------- |
+| `ARCHITEKTA_ROOT`   | Project folder of `rename` and `env install-editable` when `--root` is absent | Current folder | No |
 | `CONDA_DEFAULT_ENV` | Active conda environment name (read by `env install-editable`)     | None    | No       |
 | `CONDA_PREFIX`      | Active conda environment path (read by `env install-editable`)     | None    | No       |
 

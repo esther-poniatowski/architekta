@@ -1,5 +1,15 @@
-"""CLI command for cross-surface project renaming."""
+"""CLI command for cross-surface project renaming.
 
+The root of the project is resolved from ``--root``, then from the environment variable
+``ARCHITEKTA_ROOT``, then from the current folder. Architekta has no settings file, so the command
+does not search the ancestors of the current folder.
+
+A rename changes the files of the researcher, so the command asks for a confirmation on a terminal.
+``--yes`` answers it; without a terminal and without ``--yes``, the command stops with status 2.
+``--dry-run`` needs no confirmation, since it changes nothing.
+"""
+
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -9,28 +19,19 @@ from architekta.diagnostics import DiagnosticEntry, DiagnosticLevel, emit
 from architekta.infrastructure import GithubSlug, parse_github_remote
 from architekta.rename.render import render_dry_run
 from architekta.rename.pipeline import RenameError, run_rename_pipeline
-from architekta.renamed_options import resolve_renamed_option
-
-app = typer.Typer(
-    name="rename",
-    help="Rename a project across all surfaces (filesystem, GitHub, conda, files).",
-    no_args_is_help=True,
-)
 
 
-@app.callback(invoke_without_command=True)
 def rename(
-    ctx: typer.Context,
-    old_name: Optional[str] = typer.Argument(
-        None, help="Current project name."
-    ),
-    new_name: Optional[str] = typer.Argument(
-        None, help="New project name."
-    ),
+    old_name: str = typer.Argument(..., help="Current project name."),
+    new_name: str = typer.Argument(..., help="New project name."),
     root: Path = typer.Option(
-        ".", "--root", help="Path to the project directory (default: current directory)."
+        ".",
+        "--root",
+        "-r",
+        envvar="ARCHITEKTA_ROOT",
+        help="Project folder to rename (default: ARCHITEKTA_ROOT, else the current folder).",
+        file_okay=False,
     ),
-    path: Optional[Path] = typer.Option(None, "--path", hidden=True),
     affected_path: Optional[List[Path]] = typer.Option(
         None,
         "--affected-path",
@@ -50,9 +51,11 @@ def rename(
     workspace_file: Optional[str] = typer.Option(
         None, "--workspace-file", help="VS Code workspace filename.",
     ),
-    workspace: Optional[str] = typer.Option(None, "--workspace", hidden=True),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show the full plan without applying any changes."
+    ),
+    yes: bool = typer.Option(
+        False, "--yes", help="Answer yes to the confirmation, for a run without a terminal."
     ),
     push: bool = typer.Option(
         False, "--push", help="Push commits in all affected repositories."
@@ -70,16 +73,11 @@ def rename(
     ),
 ) -> None:
     """Rename a project across the filesystem, GitHub, conda, and all files."""
-    if ctx.invoked_subcommand is not None:
-        return
-
-    if not old_name or not new_name:
-        typer.echo(ctx.get_help())
-        raise typer.Exit(code=1)
-
-    root = resolve_renamed_option(ctx, "root", root, "--path", path)
-    workspace_file = resolve_renamed_option(ctx, "workspace_file", workspace_file, "--workspace", workspace)
     project_path = Path(root).resolve()
+    affected_paths = tuple(affected_path or [])
+
+    if not dry_run:
+        _confirm(old_name, new_name, project_path, affected_paths, yes=yes)
 
     # Resolve GitHub slug at the CLI layer.
     github_slug = parse_github_remote(project_path)
@@ -93,7 +91,7 @@ def rename(
             old_name=old_name,
             new_name=new_name,
             project_path=project_path,
-            affected_paths=tuple(affected_path or []),
+            affected_paths=affected_paths,
             aliases=tuple(alias or []),
             github_slug=github_slug,
             conda_env=conda_env,
@@ -116,6 +114,43 @@ def rename(
 
     if not report.succeeded:
         raise typer.Exit(code=1)
+
+
+def _stdin_is_terminal() -> bool:
+    """Return whether the standard input is a terminal that can answer a confirmation."""
+    return sys.stdin.isatty()
+
+
+def _confirm(
+    old_name: str, new_name: str, project_path: Path, affected_paths: tuple[Path, ...], *, yes: bool,
+) -> None:
+    """Ask for the confirmation of a rename, or stop when no one can answer it.
+
+    Raises
+    ------
+    typer.Exit
+        With status 2 when the standard input is not a terminal and ``--yes`` is absent.
+    click.exceptions.Abort
+        When the researcher declines the confirmation; the command then exits with status 1.
+    """
+    if yes:
+        return
+    if not _stdin_is_terminal():
+        emit(DiagnosticEntry(
+            DiagnosticLevel.ERROR, "",
+            "rename changes the files of the project and asks for a confirmation, but the standard "
+            "input is not a terminal; give --yes to confirm, or --dry-run to preview the plan.",
+        ))
+        raise typer.Exit(code=2)
+    scope = str(project_path)
+    if affected_paths:
+        scope += f" and {len(affected_paths)} affected project(s)"
+    typer.confirm(
+        f"Rename {old_name} to {new_name} in {scope}? This changes files, folders, the GitHub "
+        "repository and the conda environment (preview with --dry-run).",
+        default=False,
+        abort=True,
+    )
 
 
 def _print_report(report: "object", *, verbose: bool) -> None:

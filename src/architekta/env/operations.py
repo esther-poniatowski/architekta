@@ -89,7 +89,7 @@ def plan_editable_install(request: EditableInstallRequest) -> InstallResult:
 
         skipped = False
         skip_reason = ""
-        if not request.force and pth_file.exists():
+        if not request.force and pth_file.exists() and pth_file.read_text() != "\n".join(lines):
             skipped = True
             skip_reason = f".pth file already exists: {pth_file} (use --force to overwrite)"
 

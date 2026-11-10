@@ -6,15 +6,16 @@ installed as a script. Top-level commands:
 - ``info`` — Display diagnostic information.
 
 Subcommand groups are mounted on the root application from sibling packages:
-``env`` (environment management), ``github`` (repository management), and
-``rename`` (cross-surface project rename pipeline).
+``env`` (environment management) and ``github`` (repository management). The command
+``rename`` (cross-surface project rename pipeline) is a plain command, so that its options
+may follow its positional names.
 """
 
 import typer
 from . import info, __version__
 from .env.commands import app as env_app
 from .github.commands import app as github_app
-from .rename.commands import app as rename_app
+from .rename.commands import rename
 
 
 # --- Main application instance --------------------------------------------------------------------
@@ -53,4 +54,6 @@ app.add_typer(github_app, name="github")
 
 # --- Cross-surface Project Rename -----------------------------------------------------------------
 
-app.add_typer(rename_app, name="rename")
+app.command(
+    "rename", help="Rename a project across all surfaces (filesystem, GitHub, conda, files).",
+)(rename)

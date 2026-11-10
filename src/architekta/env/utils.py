@@ -55,7 +55,7 @@ def resolve_package_paths(
         )
 
     if not package_names:
-        raise InvalidPackagePath("No packages specified. Provide a name, a --path, or use --all.")
+        raise InvalidPackagePath("No packages specified. Provide a name, a --package-dir, or use --all.")
 
     specs = []
     for name in package_names:

@@ -50,7 +50,14 @@ Install a single package by name (resolved relative to `src/`):
 architekta env install-editable my_package
 ```
 
-Install from an arbitrary directory:
+Install the packages of another project, named by `--root` or by the environment variable
+`ARCHITEKTA_ROOT`:
+
+```sh
+architekta env install-editable --all --root ~/projects/my-project
+```
+
+Install from an arbitrary directory, read from the current folder:
 
 ```sh
 architekta env install-editable --package-dir ./libs/my_package
@@ -121,6 +128,14 @@ Execute the rename from a specific project directory:
 
 ```sh
 architekta rename old-name new-name --root /path/to/project
+```
+
+A rename changes the files of the project, so the command asks for a confirmation on a terminal.
+`--yes` answers it, for example in a script; without a terminal and without `--yes`, the command
+stops with status 2:
+
+```sh
+architekta rename old-name new-name --yes
 ```
 
 Propagate cross-references into sibling projects affected by the rename:
