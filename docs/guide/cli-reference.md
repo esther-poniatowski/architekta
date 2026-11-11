@@ -25,7 +25,7 @@ source distribution.
 
 - `-r`, `--root PATH` (optional): Project folder whose `src/` holds the packages. Defaults to the
   folder named by the environment variable `ARCHITEKTA_ROOT`, else to the current folder. Architekta
-  has no settings file, so the command does not search the ancestors of the current folder.
+  has no configuration file, so the command does not search the ancestors of the current folder.
 
 - `--all` (optional, default=False): Install all packages located in the `src/` directory in
   editable mode.
@@ -157,8 +157,8 @@ mutation.
 - `NEW_NAME` (positional, required): Target project name.
 
 - `-r`, `--root PATH` (optional): Path to the project directory. Defaults to the folder named by the
-  environment variable `ARCHITEKTA_ROOT`, else to the current folder. Architekta has no settings
-  file, so the command does not search the ancestors of the current folder.
+  environment variable `ARCHITEKTA_ROOT`, else to the current folder. Architekta has no
+  configuration file, so the command does not search the ancestors of the current folder.
 
 - `--affected-path PATH` (optional, repeatable): Path to a sibling project affected by the rename.
   The pipeline scans each affected project for cross-references. Repeat the flag for multiple

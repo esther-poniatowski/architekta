@@ -1,8 +1,8 @@
 """CLI command for cross-surface project renaming.
 
 The root of the project is resolved from ``--root``, then from the environment variable
-``ARCHITEKTA_ROOT``, then from the current folder. Architekta has no settings file, so the command
-does not search the ancestors of the current folder.
+``ARCHITEKTA_ROOT``, then from the current folder. Architekta has no configuration file, so the
+command does not search the ancestors of the current folder.
 
 A rename changes the files of the researcher, so the command asks for a confirmation on a terminal.
 ``--yes`` answers it; without a terminal and without ``--yes``, the command stops with status 2.
